@@ -1,0 +1,46 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id               String   @id @default(uuid())
+  username         String   @unique
+  linkedPublicKeys String[]
+  characters       String[]
+  clientId         String?
+
+  @@index([id, clientId])
+}
+
+model Character {
+  id            String @id @default(uuid())
+  owner         String //id of User
+  name          String
+  title         String
+  skin          String
+  vitals        Json
+  attributes    Json
+  proficiencies Json
+  equipment     Json
+  cosmetics     Json
+  inventory     Json
+}
+
+model Item {
+  id            String  @id @default(uuid())
+  name          String
+  description   String
+  stackSize     Int
+  equipableSlot String
+  targettable   Boolean
+  consumable    Boolean
+  effects       String
+}
