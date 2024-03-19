@@ -1,6 +1,7 @@
 import config from "@colyseus/tools";
 import { monitor } from "@colyseus/monitor";
 import { playground } from "@colyseus/playground";
+import { WebSocketTransport } from "@colyseus/ws-transport";
 
 /**
  * Import your Room files
@@ -14,7 +15,14 @@ export default config({
          * Define your room handlers:
          */
         gameServer.define('my_room', MyRoom);
+    },
 
+    initializeTransport: function (opts) {
+        return new WebSocketTransport({
+            ...opts,
+            pingInterval: 6000,
+            pingMaxRetries: 4,
+        });
     },
 
     initializeExpress: (app) => {
