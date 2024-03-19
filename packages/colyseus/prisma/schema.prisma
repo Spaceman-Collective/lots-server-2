@@ -14,11 +14,13 @@ datasource db {
 }
 
 model User {
-  username     String   @id @unique
-  displayName  String
-  passwordHash String
-  walletPubkey String   @unique
-  linkedKeys   String[]
+  username          String   @id @unique
+  displayName       String
+  passwordHash      String
+  walletPubkey      String   @unique
+  linkedKeys        String[]
+  selectedCharacter String
+  clientId          String
 }
 
 model Wallet {

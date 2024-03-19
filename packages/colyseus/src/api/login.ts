@@ -1,8 +1,6 @@
 /**
  * 1. Create an Account
  * 2. Login to the Account  -> Return data for Client
- * 3. Create Room (WS to Colyseus)
- * 4. Join Room (WS to Colyseus)
  */
 
 import { Request, Response } from "express";
@@ -39,9 +37,12 @@ async function createAccount(req: Request, res: Response) {
         await prisma.user.create({
             data: {
                 username: createAccountInfo.username,
+                displayName: createAccountInfo.username,
                 passwordHash: passwordHash,
                 walletPubkey: newUserWallet.publicKey.toString(),
-                linkedKeys: []
+                linkedKeys: [],
+                selectedCharacter: "",
+                clientId: ""
             }
         });
 
@@ -51,7 +52,9 @@ async function createAccount(req: Request, res: Response) {
                 pubkey: newUserWallet.publicKey.toString(),
                 privatekey: encode(newUserWallet.secretKey)
             }
-        })
+        });
+
+        res.status(200).json({ success: true });
     } catch (e: any) {
         res.status(500).json({ success: false, error: e.message });
     }
@@ -81,6 +84,7 @@ async function login(req: Request, res: Response) {
             .setExpirationTime("12h")
             .sign(new TextEncoder().encode(process.env.SERVER_JWT_KEY));
 
+        res.status(200).json({ success: true, jwt });
     } catch (e: any) {
         res.status(500).json({ success: false, error: e.message });
     }
