@@ -49,7 +49,7 @@ export async function createAccount(req: Request, res: Response) {
 
         const character = await prisma.userCharacters.create({
             data: {
-                username: user.username,
+                username: createAccountInfo.username,
                 selected: true,
                 amount: -1,
                 vitals: DEFAULT_CHARACTER.vitals,
