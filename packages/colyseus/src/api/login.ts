@@ -34,7 +34,7 @@ export async function createAccount(req: Request, res: Response) {
 
         // Use the Pubkey as salt and save login info to database
         const passwordHash = scryptSync(createAccountInfo.password, userSalt, 64).toString("hex");
-        await prisma.user.create({
+        const newUser = await prisma.user.create({
             data: {
                 username: createAccountInfo.username,
                 displayName: createAccountInfo.username,
@@ -44,8 +44,7 @@ export async function createAccount(req: Request, res: Response) {
                 clientId: ""
             }
         });
-
-        console.log("Creating default user characters!");
+        console.log("New user created: ", newUser);
 
         const character = await prisma.userCharacters.create({
             data: {
@@ -59,6 +58,7 @@ export async function createAccount(req: Request, res: Response) {
                 worn: DEFAULT_CHARACTER.worn
             }
         })
+        console.log("New characters given to user: ", character);
 
         res.status(200).json({ success: true, character });
     } catch (e: any) {
