@@ -100,6 +100,7 @@ export class BattleArenaRoom extends Room<BattleArenaRoomStateSchema> {
     // Get the ActionsQ for this Tick and process it
     if (this.state.tickQ.has(this.state.ticks.toString())) {
       const actions = this.state.tickQ.get(this.state.ticks.toString()).actions;
+      this.processActionQ(actions);
     }
   }
 

@@ -19,8 +19,8 @@ model User {
   characterSkin String @default("DEFAULT")
   userSalt      String
   passwordHash  String
-  walletPubkey  String //external optional key to save
-  clientId      String
+  walletPubkey  String @default("")
+  clientId      String @default("")
 }
 
 model UserCharacters {
