@@ -76,8 +76,9 @@ export class BattleArenaRoom extends Room<BattleArenaRoomStateSchema> {
         }
       });
 
-    } catch (e) {
-      this.disconnect();
+    } catch (e: any) {
+      console.log("Error: ", e.message);
+      //this.disconnect();
     }
   }
 
