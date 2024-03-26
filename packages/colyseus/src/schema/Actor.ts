@@ -7,22 +7,27 @@ import { Type as ClassType } from "class-transformer";
 export class VitalsSchema extends Schema {
     @type("number") health: number;
     @type("number") healthMax: number;
+    @type("number") healthRecovery: number; // per tick, applied every 10 ticks (1s)
 
     // Protects against TECH attacks
     @type("number") shields: number;
     @type("number") shieldsMax: number;
+    @type("number") shieldsRecovery: number;
 
     // Protects against PHYSICAL Attacks
     @type("number") armor: number;
     @type("number") armorMax: number;
+    @type("number") armorRecovery: number;
 
     // Protects against MAGIC Attacks
     @type("number") barrier: number;
     @type("number") barrierMax: number;
+    @type("number") barrierRecovery: number;
 
     // Determines RUN duration
     @type("number") stamina: number;
     @type("number") staminaMax: number;
+    @type("number") staminaRecovery: number;
 }
 
 /**

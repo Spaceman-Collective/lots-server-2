@@ -5,12 +5,16 @@ import { PrismaClient } from '@prisma/client';
 import { jwtVerify } from "jose";
 import { plainToInstance } from "class-transformer";
 import { UserSchema } from "../schema/User";
+import { ActionArraySchema, ActionSchema } from "../schema/Action";
+import { move } from "../handlers/move";
+import { ArraySchema } from "@colyseus/schema";
 const prisma = new PrismaClient();
 
 const CreateRoomMsg = z.object({
   maxPlayers: z.number().min(1).max(5).optional(),
   password: z.string().optional(),
   map: z.enum(["DEFAULT"]),
+  ownerUserName: z.string()
 });
 
 const JoinRoomMsg = z.object({
@@ -26,19 +30,79 @@ export class BattleArenaRoom extends Room<BattleArenaRoomStateSchema> {
     try {
       const msg = CreateRoomMsg.parse(options);
       this.setState(new BattleArenaRoomStateSchema(
+        msg.ownerUserName,
         msg.password,
         msg.maxPlayers,
         msg.map
       ));
 
-      this.onMessage("type", (client, message) => {
-        //
-        // handle "type" message
-        //
+      this.onMessage("game:state:start", (client, message) => {
+        try {
+          const userObj = this.state.users.get(client.id);
+          if (userObj.username === this.state.roomOptions.ownerUserName) {
+            this.state.inLobby = false;
+          } else {
+            throw new Error("Only the owner may start the room!")
+          }
+        } catch (e: any) {
+          client.send("error", JSON.stringify({ error: e }));
+        }
+      });
+
+      const CharacterActionMsg = z.object({
+        reqId: z.string(),
+        type: z.enum(["MOVE", "ATTACK", "CONSUME"]),
+        payload: z.any()
+      });
+
+      this.onMessage("character:action", async (client, message) => {
+        try {
+          const msg = CharacterActionMsg.parse(message);
+          if (this.state.clientCurrentAction.get(client.id)) {
+            this.state.clientBufferedAction.set(client.id, new ActionSchema());
+          } else {
+            switch (msg.type) {
+              case "MOVE":
+                await move(this.state, client, msg.payload, msg.reqId);
+                break;
+              case "ATTACK":
+                break;
+              case "CONSUME":
+                break;
+            }
+          }
+        } catch (e: any) {
+          client.send("error", JSON.stringify({ error: e }));
+        }
       });
 
     } catch (e) {
       this.disconnect();
+    }
+  }
+
+  /**
+   * Called every tick
+   */
+  update(dt: number) {
+    this.state.ticks += 1;
+
+    // Get the ActionsQ for this Tick and process it
+    if (this.state.tickQ.has(this.state.ticks.toString())) {
+      const actions = this.state.tickQ.get(this.state.ticks.toString()).actions;
+    }
+  }
+
+  async processActionQ(actions: ArraySchema<ActionSchema>) {
+    for (let action of actions.toArray()) {
+      switch (action.actionType) {
+        case "MOVE":
+          break;
+        case "ATTACK":
+          break;
+        case "CONSUME":
+          break;
+      }
     }
   }
 

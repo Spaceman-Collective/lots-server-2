@@ -14,12 +14,13 @@ datasource db {
 }
 
 model User {
-  username     String @id
-  displayName  String
-  userSalt     String
-  passwordHash String
-  walletPubkey String //external optional key to save
-  clientId     String
+  username      String @id
+  displayName   String
+  characterSkin String
+  userSalt      String
+  passwordHash  String
+  walletPubkey  String //external optional key to save
+  clientId      String
 }
 
 model UserCharacters {
