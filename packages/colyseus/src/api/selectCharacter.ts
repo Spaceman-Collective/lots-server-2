@@ -14,7 +14,7 @@ const SelectCharacterMsg = z.object({
 /**
  * Takes in a jwt with a username, and either a predefined character or a asset id for a cNFT that's in their wallet
  */
-async function selectCharacter(req: Request, res: Response) {
+export async function selectCharacter(req: Request, res: Response) {
     try {
         const scInfo = SelectCharacterMsg.parse(req.body);
 

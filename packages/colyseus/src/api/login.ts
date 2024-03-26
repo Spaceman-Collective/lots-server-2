@@ -21,7 +21,7 @@ const AccountMsg = z.object({
 /**
  * Takes in a Username and Password, stores it using scrypt and wallet pubkey as the salt
  */
-async function createAccount(req: Request, res: Response) {
+export async function createAccount(req: Request, res: Response) {
     try {
         const createAccountInfo = AccountMsg.parse(req.body);
         // Check user name is not already taken
@@ -54,7 +54,7 @@ async function createAccount(req: Request, res: Response) {
 /**
  * Takes in a username/password and returns a JWT that can be used for auth through WS API
  */
-async function login(req: Request, res: Response) {
+export async function login(req: Request, res: Response) {
     try {
         const loginInfo = AccountMsg.parse(req.body);
         // Check user name is not already taken

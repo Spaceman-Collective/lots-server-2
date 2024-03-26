@@ -2,11 +2,12 @@ import config from "@colyseus/tools";
 import { monitor } from "@colyseus/monitor";
 import { playground } from "@colyseus/playground";
 import { WebSocketTransport } from "@colyseus/ws-transport";
-
 /**
  * Import your Room files
  */
 import { BattleArenaRoom } from "./rooms/BattleArenaRoom";
+import { createAccount, login } from "./api/login";
+import { selectCharacter } from "./api/selectCharacter";
 
 export default config({
 
@@ -33,6 +34,18 @@ export default config({
         app.get("/hello_world", (req, res) => {
             res.send("It's time to kick ass and chew bubblegum!");
         });
+
+        app.post("/createaccount", async (req, res) => {
+            await createAccount(req, res);
+        })
+
+        app.post("/login", async (req, res) => {
+            await login(req, res);
+        })
+
+        app.post("/character/select", async (req, res) => {
+            await selectCharacter(req, res);
+        })
 
         /**
          * Use @colyseus/playground

@@ -7,9 +7,5 @@ for file in *.ts; do
     schema-codegen $file --output ./lots-unity-schemas/ --csharp
 done
 
-for file in rooms/*.ts; do
-    # Run the command with the current file
-    schema-codegen $file --output ./lots-unity-schemas/rooms/ --csharp
-done
 
 zip -r lots-unity-schemas.zip lots-unity-schemas/
