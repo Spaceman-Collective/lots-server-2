@@ -46,9 +46,11 @@ export async function move(state: BattleArenaRoomStateSchema, client: Client, ms
     }
 }
 
-export async function resolveMove(action: ActionSchema) {
+export async function resolveMove(state: BattleArenaRoomStateSchema, action: ActionSchema) {
     try {
-
+        const { targetTile } = MoveMsg.parse(JSON.parse(action.payload));
+        state.users.get(action.clientId).actor.x = targetTile.x;
+        state.users.get(action.clientId).actor.y = targetTile.y;
     } catch (e: any) {
         throw new Error("Couldn't resolve move!")
     }

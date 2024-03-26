@@ -6,7 +6,7 @@ import { jwtVerify } from "jose";
 import { plainToInstance } from "class-transformer";
 import { UserSchema } from "../schema/User";
 import { ActionArraySchema, ActionSchema } from "../schema/Action";
-import { move } from "../handlers/move";
+import { move, resolveMove } from "../handlers/move";
 import { ArraySchema } from "@colyseus/schema";
 const prisma = new PrismaClient();
 
@@ -97,6 +97,7 @@ export class BattleArenaRoom extends Room<BattleArenaRoomStateSchema> {
     for (let action of actions.toArray()) {
       switch (action.actionType) {
         case "MOVE":
+          await resolveMove(this.state, action);
           break;
         case "ATTACK":
           break;
