@@ -15,7 +15,6 @@ const MoveMsg = z.object({
 export async function move(state: BattleArenaRoomStateSchema, client: Client, msg: any, reqId: string) {
     try {
         const { targetTile } = MoveMsg.parse(msg);
-
         // Check if Tile Is movable
         if (state.map.getXY(targetTile.x, targetTile.y).movingSpeed < 0) {
             throw new Error("Tile is obstructed!");
@@ -37,9 +36,9 @@ export async function move(state: BattleArenaRoomStateSchema, client: Client, ms
             actionType: "MOVE",
             reqId,
             clientId: client.id,
-            payload: msg,
-            tickStartedAt: state.ticks,
-            tickEndsAt: actorMoveUpdateTick
+            payload: JSON.stringify(msg),
+            tickStartedAt: state.ticks.toString(),
+            tickEndsAt: actorMoveUpdateTick.toString()
         }))
     } catch (e: any) {
         throw e;

@@ -8,7 +8,7 @@ import DefaultMap from '../../maps/default';
 export class BattleArenaRoomStateSchema extends Schema {
     @type("uint64") ticks: number;
 
-    @type(RoomOptionsSchema) roomOptions: RoomOptionsSchema;
+    @type(RoomOptionsSchema) roomOptions: RoomOptionsSchema = new RoomOptionsSchema();
     @type(Map) map = new Map();
 
     // Client ID => User Object => Actor they control
@@ -32,6 +32,7 @@ export class BattleArenaRoomStateSchema extends Schema {
         map: string,
     ) {
         super();
+        this.ticks = 0;
         this.roomOptions.ownerUserName = ownerUserName;
         this.roomOptions.password = password;
         this.roomOptions.maxPlayers = maxPlayers;
@@ -39,7 +40,7 @@ export class BattleArenaRoomStateSchema extends Schema {
         this.inLobby = true;
 
         switch (map) {
-            case "default":
+            case "DEFAULT":
                 this.map = DefaultMap;
                 break;
         }

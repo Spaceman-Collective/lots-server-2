@@ -14,7 +14,8 @@ const CreateRoomMsg = z.object({
   maxPlayers: z.number().min(1).max(5).optional(),
   password: z.string().optional(),
   map: z.enum(["DEFAULT"]),
-  ownerUserName: z.string()
+  ownerUserName: z.string(),
+  jwt: z.string(),
 });
 
 const JoinRoomMsg = z.object({
@@ -35,6 +36,9 @@ export class BattleArenaRoom extends Room<BattleArenaRoomStateSchema> {
         msg.maxPlayers,
         msg.map
       ));
+
+      // Sets the tick rate
+      this.setSimulationInterval((dt) => this.update(dt), 100);
 
       this.onMessage("game:state:start", (client, message) => {
         try {
@@ -57,6 +61,10 @@ export class BattleArenaRoom extends Room<BattleArenaRoomStateSchema> {
 
       this.onMessage("character:action", async (client, message) => {
         try {
+          if (this.state.inLobby) {
+            throw new Error("Game not started yet!")
+          }
+
           const msg = CharacterActionMsg.parse(message);
           if (this.state.clientCurrentAction.get(client.id)) {
             this.state.clientBufferedAction.set(client.id, new ActionSchema());
@@ -72,13 +80,14 @@ export class BattleArenaRoom extends Room<BattleArenaRoomStateSchema> {
             }
           }
         } catch (e: any) {
-          client.send("error", JSON.stringify({ error: e }));
+          client.send("error", JSON.stringify({ error: e.message }));
         }
       });
 
+
+      console.log("Room created successfully!")
     } catch (e: any) {
       console.log("Error: ", e.message);
-      //this.disconnect();
     }
   }
 
@@ -171,6 +180,7 @@ export class BattleArenaRoom extends Room<BattleArenaRoomStateSchema> {
       }));
 
     } catch (e: any) {
+      console.log(e.message);
       client.send("error", JSON.stringify({ error: e.message }));
       client.leave();
     }
