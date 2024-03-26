@@ -45,7 +45,9 @@ export async function createAccount(req: Request, res: Response) {
             }
         });
 
-        await prisma.userCharacters.create({
+        console.log("Creating default user characters!");
+
+        const character = await prisma.userCharacters.create({
             data: {
                 username: user.username,
                 selected: true,
@@ -58,7 +60,7 @@ export async function createAccount(req: Request, res: Response) {
             }
         })
 
-        res.status(200).json({ success: true });
+        res.status(200).json({ success: true, character });
     } catch (e: any) {
         res.status(500).json({ success: false, error: e.message });
     }
