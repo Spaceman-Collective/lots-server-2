@@ -60,7 +60,7 @@ export async function createAccount(req: Request, res: Response) {
         })
         console.log("New characters given to user: ", character);
 
-        res.status(200).json({ success: true, character });
+        res.status(200).json({ success: true });
     } catch (e: any) {
         res.status(500).json({ success: false, error: e.message });
     }
