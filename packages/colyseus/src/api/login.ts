@@ -77,7 +77,7 @@ export async function login(req: Request, res: Response) {
         if (!user) {
             throw new Error("User doesn't exist")
         }
-        const pHash = scryptSync(loginInfo.password, user.walletPubkey, 64).toString("hex");
+        const pHash = scryptSync(loginInfo.password, user.userSalt, 64).toString("hex");
         if (user.passwordHash !== pHash) {
             throw new Error("Incorrect Password!")
         }
