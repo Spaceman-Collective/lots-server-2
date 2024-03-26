@@ -77,3 +77,30 @@ export async function selectCharacter(req: Request, res: Response) {
         res.status(500).json({ success: false, error: e.message })
     }
 }
+
+const GetCharactersMsg = z.object({
+    jwt: z.string()
+})
+
+export async function getCharacters(req: Request, res: Response) {
+    try {
+        const { jwt } = GetCharactersMsg.parse(req.body);
+        // Verify JWT and get Username
+        const { payload } = await jwtVerify(
+            jwt,
+            new TextEncoder().encode(process.env.SERVER_JWT_KEY)
+        );
+        const username = payload.username as string;
+
+
+        const characters = await prisma.userCharacters.findMany({
+            where: {
+                username
+            }
+        });
+
+        res.status(200).send({ success: true, characters })
+    } catch (e: any) {
+        res.status(500).json({ success: false, error: e.message })
+    }
+}

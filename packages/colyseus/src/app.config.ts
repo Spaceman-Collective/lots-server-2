@@ -7,7 +7,7 @@ import { WebSocketTransport } from "@colyseus/ws-transport";
  */
 import { BattleArenaRoom } from "./rooms/BattleArenaRoom";
 import { createAccount, login } from "./api/login";
-import { selectCharacter } from "./api/selectCharacter";
+import { getCharacters, selectCharacter } from "./api/selectCharacter";
 
 export default config({
 
@@ -43,8 +43,12 @@ export default config({
             await login(req, res);
         })
 
-        app.post("/character/select", async (req, res) => {
+        app.post("/characters/select", async (req, res) => {
             await selectCharacter(req, res);
+        })
+
+        app.post("/characters/get", async (req, res) => {
+            await getCharacters(req, res);
         })
 
         /**

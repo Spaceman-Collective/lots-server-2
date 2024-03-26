@@ -40,7 +40,7 @@ export async function createAccount(req: Request, res: Response) {
                 displayName: createAccountInfo.username,
                 userSalt: userSalt,
                 passwordHash: passwordHash,
-                walletPubkey: createAccountInfo.walletPubkey,
+                walletPubkey: createAccountInfo.walletPubkey ? createAccountInfo.walletPubkey : "",
                 clientId: ""
             }
         });
