@@ -8,7 +8,7 @@ const prisma = new PrismaClient();
 
 const SelectCharacterMsg = z.object({
     jwt: z.string(),
-    characterAssetId: z.string() // Going to be either a predefined ID, or a pubkey for a cNFT
+    characterId: z.string() // Going to be either a predefined ID, or a pubkey for a cNFT
 });
 
 /**
@@ -19,7 +19,6 @@ async function selectCharacter(req: Request, res: Response) {
         const scInfo = SelectCharacterMsg.parse(req.body);
 
         // Verify JWT and get Username
-
         const { payload } = await jwtVerify(
             scInfo.jwt,
             new TextEncoder().encode(process.env.SERVER_JWT_KEY)
@@ -31,22 +30,49 @@ async function selectCharacter(req: Request, res: Response) {
             throw new Error("User not found!")
         }
 
-        // Check if CharacterAsset is a predefined Character
-        if (!scInfo.characterAssetId.startsWith("character:")) {
-            throw new Error("Only predefined characters allowed right now!")
+        // When you join a room you're locked in to your selection
+        if (user.clientId !== "") {
+            throw new Error("Can't change characters while in a room!");
         }
 
-        const characterId = scInfo.characterAssetId.split(":")[1];
-        // TODO: Check that it's a valid character ID!
-        await prisma.user.update({
-            where: { username: user.username },
-            data: {
-                selectedCharacter: characterId
+        const character = await prisma.userCharacters.findFirst({
+            where: {
+                username: user.username,
+                id: scInfo.characterId
             }
         })
-        res.status(200).json({ success: true });
-        // TODO: If AssetId is NOT predefined character, search their wallet to see if they have it
+        if (!character) {
+            throw new Error("Character not found in User Inventory!")
+        }
 
+        const previouslySelectedCharacter = await prisma.userCharacters.findFirst({
+            where: {
+                username: user.username,
+                selected: true
+            }
+        });
+
+        if (previouslySelectedCharacter) {
+            await prisma.userCharacters.update({
+                where: {
+                    id: previouslySelectedCharacter.id
+                },
+                data: {
+                    selected: false
+                }
+            })
+        }
+
+        await prisma.userCharacters.update({
+            where: {
+                id: character.id,
+            },
+            data: {
+                selected: true
+            }
+        })
+
+        res.status(200).json({ success: true });
     } catch (e: any) {
         res.status(500).json({ success: false, error: e.message })
     }

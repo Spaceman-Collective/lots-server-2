@@ -7,7 +7,7 @@ import { Request, Response } from "express";
 import { z } from "zod";
 import { PrismaClient } from '@prisma/client';
 const prisma = new PrismaClient();
-import { Keypair } from '@solana/web3.js';
+import { randomBytes } from 'crypto';
 import { scryptSync } from 'crypto';
 import { encode } from 'bs58';
 import { SignJWT } from "jose";
@@ -15,6 +15,7 @@ import { SignJWT } from "jose";
 const AccountMsg = z.object({
     username: z.string(),
     password: z.string(),
+    walletPubkey: z.string().optional()
 })
 
 /**
@@ -29,28 +30,18 @@ async function createAccount(req: Request, res: Response) {
             throw new Error("Username already exists")
         }
 
-        // Generate a private/pubkey keypair
-        const newUserWallet = Keypair.generate();
+        const userSalt = randomBytes(64).toString("hex");
 
         // Use the Pubkey as salt and save login info to database
-        const passwordHash = scryptSync(createAccountInfo.password, newUserWallet.publicKey.toString(), 64).toString("hex");
+        const passwordHash = scryptSync(createAccountInfo.password, userSalt, 64).toString("hex");
         await prisma.user.create({
             data: {
                 username: createAccountInfo.username,
                 displayName: createAccountInfo.username,
+                userSalt: userSalt,
                 passwordHash: passwordHash,
-                walletPubkey: newUserWallet.publicKey.toString(),
-                linkedKeys: [],
-                selectedCharacter: "",
+                walletPubkey: createAccountInfo.walletPubkey,
                 clientId: ""
-            }
-        });
-
-        // TODO: Secure this somehow?
-        await prisma.wallet.create({
-            data: {
-                pubkey: newUserWallet.publicKey.toString(),
-                privatekey: encode(newUserWallet.secretKey)
             }
         });
 

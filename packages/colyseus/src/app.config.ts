@@ -6,7 +6,7 @@ import { WebSocketTransport } from "@colyseus/ws-transport";
 /**
  * Import your Room files
  */
-import { MyRoom } from "./rooms/MyRoom";
+import { BattleArenaRoom } from "./rooms/BattleArenaRoom";
 
 export default config({
 
@@ -14,7 +14,7 @@ export default config({
         /**
          * Define your room handlers:
          */
-        gameServer.define('my_room', MyRoom);
+        gameServer.define('battlearena', BattleArenaRoom);
     },
 
     initializeTransport: function (opts) {
