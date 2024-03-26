@@ -9,8 +9,8 @@ import { PrismaClient } from '@prisma/client';
 const prisma = new PrismaClient();
 import { randomBytes } from 'crypto';
 import { scryptSync } from 'crypto';
-import { encode } from 'bs58';
 import { SignJWT } from "jose";
+import { character as DEFAULT_CHARACTER } from "../characters/default";
 
 const AccountMsg = z.object({
     username: z.string(),
@@ -44,6 +44,19 @@ export async function createAccount(req: Request, res: Response) {
                 clientId: ""
             }
         });
+
+        await prisma.userCharacters.create({
+            data: {
+                username: user.username,
+                selected: true,
+                amount: -1,
+                vitals: DEFAULT_CHARACTER.vitals,
+                stats: DEFAULT_CHARACTER.stats,
+                skills: DEFAULT_CHARACTER.skills,
+                inventory: DEFAULT_CHARACTER.inventory,
+                worn: DEFAULT_CHARACTER.worn
+            }
+        })
 
         res.status(200).json({ success: true });
     } catch (e: any) {

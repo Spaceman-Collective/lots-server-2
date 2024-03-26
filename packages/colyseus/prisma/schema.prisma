@@ -24,11 +24,10 @@ model User {
 }
 
 model UserCharacters {
-  id          String  @id @default(uuid())
-  username    String
-  selected    Boolean
-  characterId String
-  amount      Int //-1 means infinite
+  id       String  @id @default(uuid())
+  username String
+  selected Boolean
+  amount   Int //-1 means infinite
 
   vitals    Json
   stats     Json
