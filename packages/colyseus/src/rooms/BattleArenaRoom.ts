@@ -100,11 +100,11 @@ export class BattleArenaRoom extends Room<BattleArenaRoomStateSchema> {
     // Get the ActionsQ for this Tick and process it
     if (this.state.tickQ.has(this.state.ticks.toString())) {
       const actions = this.state.tickQ.get(this.state.ticks.toString()).actions;
-      this.processActionQ(actions);
+      this.processActionQ(this.state.ticks.toString(), actions);
     }
   }
 
-  async processActionQ(actions: ArraySchema<ActionSchema>) {
+  async processActionQ(tick: string, actions: ArraySchema<ActionSchema>) {
     for (let action of actions.toArray()) {
       switch (action.actionType) {
         case "MOVE":
@@ -115,7 +115,23 @@ export class BattleArenaRoom extends Room<BattleArenaRoomStateSchema> {
         case "CONSUME":
           break;
       }
+      this.state.clientCurrentAction.delete(action.clientId);
+      if (this.state.clientBufferedAction.has(action.clientId)) {
+        // if there's an action q'd up, add it to current action and process it
+        const newAction = this.state.clientBufferedAction.get(action.clientId);
+        switch (newAction.actionType) {
+          case "MOVE":
+            await move(this.state, this.clients.getById(newAction.clientId), JSON.parse(newAction.payload), newAction.reqId);
+            break;
+          case "ATTACK":
+            break;
+          case "CONSUME":
+            break;
+        }
+        this.state.clientBufferedAction.delete(action.clientId);
+      }
     }
+    this.state.tickQ.delete(tick);
   }
 
   async onJoin(client: Client, options: any) {
