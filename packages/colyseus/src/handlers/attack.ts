@@ -137,7 +137,7 @@ export async function resolveAttack(state: BattleArenaRoomStateSchema, action: A
                     let armorDmg = targetUser.actor.vitals.armor - dmgRoll;
                     if (armorDmg < 0) {
                         healthDmg = Math.abs(armorDmg);
-                        targetUser.actor.vitals.armor -= targetUser.actor.vitals.armor; //sets barrier to 0
+                        targetUser.actor.vitals.armor -= targetUser.actor.vitals.armor; //sets armor to 0
                     }
                 }
                 break;
@@ -146,7 +146,7 @@ export async function resolveAttack(state: BattleArenaRoomStateSchema, action: A
                     let shieldsDmg = targetUser.actor.vitals.shields - dmgRoll;
                     if (shieldsDmg < 0) {
                         healthDmg = Math.abs(shieldsDmg);
-                        targetUser.actor.vitals.shields -= targetUser.actor.vitals.shields; //sets barrier to 0
+                        targetUser.actor.vitals.shields -= targetUser.actor.vitals.shields; //sets shields to 0
                     }
                 }
                 break;

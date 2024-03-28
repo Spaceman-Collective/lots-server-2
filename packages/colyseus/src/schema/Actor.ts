@@ -1,7 +1,6 @@
 import { Schema, ArraySchema, type } from "@colyseus/schema";
 import { EntitySchema } from "./Entity";
 import { Type as ClassType } from "class-transformer";
-import { boolean } from "zod";
 
 
 // Tracks various health pools and run energy
@@ -69,7 +68,7 @@ export class ItemObject extends Schema {
 export class InventorySchema extends Schema {
     @ClassType(() => ArraySchema<ItemObject>)
     @type([ItemObject])
-    items: ArraySchema<ItemObject>;
+    items: ArraySchema<ItemObject> = new ArraySchema<ItemObject>();
 }
 
 // ID for what item is worn in given slots
@@ -87,19 +86,19 @@ export class WornSchema extends Schema {
  */
 export class ActorSchema extends EntitySchema {
     @ClassType(() => VitalsSchema)
-    @type(VitalsSchema) vitals: VitalsSchema;
+    @type(VitalsSchema) vitals: VitalsSchema = new VitalsSchema();
 
     @ClassType(() => StatsSchema)
-    @type(StatsSchema) stats: StatsSchema;
+    @type(StatsSchema) stats: StatsSchema = new StatsSchema();
 
     @ClassType(() => SkillsSchema)
-    @type(SkillsSchema) skills: SkillsSchema;
+    @type(SkillsSchema) skills: SkillsSchema = new SkillsSchema();
 
     @ClassType(() => InventorySchema)
-    @type(InventorySchema) inventory: InventorySchema;
+    @type(InventorySchema) inventory: InventorySchema = new InventorySchema();
 
     @ClassType(() => WornSchema)
-    @type(WornSchema) worn: WornSchema
+    @type(WornSchema) worn: WornSchema = new WornSchema();
 
-    @type("boolean") isAlive: boolean;
+    @type("boolean") isAlive: boolean = true;
 }

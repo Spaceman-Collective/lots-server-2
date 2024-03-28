@@ -41,7 +41,7 @@ export async function createAccount(req: Request, res: Response) {
                 userSalt: userSalt,
                 passwordHash: passwordHash,
                 walletPubkey: createAccountInfo.walletPubkey ? createAccountInfo.walletPubkey : "",
-                clientId: ""
+                clientId: 'not_logged_in'
             }
         });
 
@@ -59,7 +59,7 @@ export async function createAccount(req: Request, res: Response) {
         await prisma.userEquipment.create({
             data: {
                 username: createAccountInfo.username,
-                inventory: [],
+                inventory: { items: [] },
                 worn: {
                     head: "",
                     torso: "",
@@ -67,7 +67,8 @@ export async function createAccount(req: Request, res: Response) {
                     boots: "",
                     mainhand: "",
                     offhand: "",
-                }
+                },
+                vault: []
             }
         })
 

@@ -8,6 +8,8 @@ import { UserSchema } from "../schema/User";
 import { ActionSchema } from "../schema/Action";
 import { move, resolveMove } from "../handlers/move";
 import { ArraySchema } from "@colyseus/schema";
+import { attack, resolveAttack } from "../handlers/attack";
+import { InventorySchema, WornSchema } from "../schema/Actor";
 const prisma = new PrismaClient();
 
 const CreateRoomMsg = z.object({
@@ -36,6 +38,8 @@ export class BattleArenaRoom extends Room<BattleArenaRoomStateSchema> {
         msg.maxPlayers,
         msg.map
       ));
+
+      this.maxClients = msg.maxPlayers;
 
       // Sets the tick rate
       this.setSimulationInterval((dt) => this.update(dt), 100);
@@ -74,6 +78,7 @@ export class BattleArenaRoom extends Room<BattleArenaRoomStateSchema> {
                 await move(this.state, client, msg.payload, msg.reqId);
                 break;
               case "ATTACK":
+                await attack(this.state, client, msg.payload, msg.reqId)
                 break;
               case "CONSUME":
                 break;
@@ -96,12 +101,66 @@ export class BattleArenaRoom extends Room<BattleArenaRoomStateSchema> {
    * Called every tick
    */
   update(dt: number) {
+    // Only process ticks if the game is running
+    if (this.state.inLobby) {
+      return;
+    }
     this.state.ticks += 1;
 
     // Get the ActionsQ for this Tick and process it
     if (this.state.tickQ.has(this.state.ticks.toString())) {
       const actions = this.state.tickQ.get(this.state.ticks.toString()).actions;
       this.processActionQ(this.state.ticks.toString(), actions);
+    }
+
+    // Get the EffectsQ for this Tick and process it
+
+    // if %10 (every second), run the vitals recovery
+    if (this.state.ticks % 10 == 0) {
+      this.vitalsRecovery();
+    }
+  }
+
+  async vitalsRecovery() {
+    for (let user of this.state.users.entries()) {
+      try {
+        const newHP = user[1].actor.vitals.health + user[1].actor.vitals.healthRecovery;
+        if (newHP > user[1].actor.vitals.healthMax) {
+          user[1].actor.vitals.health = user[1].actor.vitals.healthMax;
+        } else {
+          user[1].actor.vitals.health = newHP;
+        }
+
+        const newArmor = user[1].actor.vitals.armor + user[1].actor.vitals.armorRecovery;
+        if (newArmor > user[1].actor.vitals.armorMax) {
+          user[1].actor.vitals.armor = user[1].actor.vitals.armorMax;
+        } else {
+          user[1].actor.vitals.armor = newArmor;
+        }
+
+        const newShields = user[1].actor.vitals.shields + user[1].actor.vitals.shieldsRecovery;
+        if (newShields > user[1].actor.vitals.shieldsMax) {
+          user[1].actor.vitals.shields = user[1].actor.vitals.shieldsMax;
+        } else {
+          user[1].actor.vitals.shields = newShields;
+        }
+
+        const newBarrier = user[1].actor.vitals.barrier + user[1].actor.vitals.barrierRecovery;
+        if (newBarrier > user[1].actor.vitals.barrierMax) {
+          user[1].actor.vitals.barrier = user[1].actor.vitals.barrierMax;
+        } else {
+          user[1].actor.vitals.barrier = newBarrier;
+        }
+
+        const newStamina = user[1].actor.vitals.stamina + user[1].actor.vitals.staminaRecovery;
+        if (newStamina > user[1].actor.vitals.staminaMax) {
+          user[1].actor.vitals.stamina = user[1].actor.vitals.staminaMax;
+        } else {
+          user[1].actor.vitals.stamina = newStamina;
+        }
+      } catch (e) {
+
+      }
     }
   }
 
@@ -113,6 +172,7 @@ export class BattleArenaRoom extends Room<BattleArenaRoomStateSchema> {
             await resolveMove(this.state, action);
             break;
           case "ATTACK":
+            await resolveAttack(this.state, action);
             break;
           case "CONSUME":
             break;
@@ -126,6 +186,7 @@ export class BattleArenaRoom extends Room<BattleArenaRoomStateSchema> {
               await move(this.state, this.clients.getById(newAction.clientId), JSON.parse(newAction.payload), newAction.reqId);
               break;
             case "ATTACK":
+              await attack(this.state, this.clients.getById(newAction.clientId), JSON.parse(newAction.payload), newAction.reqId)
               break;
             case "CONSUME":
               break;
@@ -164,19 +225,9 @@ export class BattleArenaRoom extends Room<BattleArenaRoomStateSchema> {
       if (!user) {
         throw new Error("User not found!")
       }
-      if (user.clientId !== "") {
+      if (!user.clientId.includes("not_logged_in")) {
         throw new Error("User logged in on another session!")
       }
-
-      // Set the user client session to this one
-      await prisma.user.update({
-        where: {
-          username: username,
-        },
-        data: {
-          clientId: client.id
-        }
-      })
 
       // Set the user object in the room state
       const actor = await prisma.userCharacters.findFirst({
@@ -195,6 +246,7 @@ export class BattleArenaRoom extends Room<BattleArenaRoomStateSchema> {
         }
       });
 
+
       this.state.users.set(client.id, plainToInstance(UserSchema, {
         username: user.username,
         displayName: user.displayName,
@@ -208,10 +260,21 @@ export class BattleArenaRoom extends Room<BattleArenaRoomStateSchema> {
         }
       }));
 
+
       // Reverse look up
       this.state.usernameToClientId.set(user.username, client.id);
 
+      // Set the user client session to this one
+      await prisma.user.update({
+        where: {
+          username: username,
+        },
+        data: {
+          clientId: client.id
+        }
+      })
     } catch (e: any) {
+      console.error(e.message);
       client.send("error", JSON.stringify({ error: e.message }));
       client.leave();
     }
@@ -226,7 +289,7 @@ export class BattleArenaRoom extends Room<BattleArenaRoomStateSchema> {
           username: userObj.username
         },
         data: {
-          clientId: ""
+          clientId: "not_logged_in"
         }
       })
     } catch (e: any) {

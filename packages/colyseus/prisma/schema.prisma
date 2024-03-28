@@ -41,6 +41,7 @@ model UserEquipment {
   username  String @id
   inventory Json
   worn      Json
+  vault     Json
 }
 
 // TODO: ITEM LIBRARY
