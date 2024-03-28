@@ -29,14 +29,18 @@ model UserCharacters {
   selected Boolean
   amount   Int //-1 means infinite
 
-  vitals    Json
-  stats     Json
-  skills    Json
-  inventory Json
-  worn      Json
+  vitals Json
+  stats  Json
+  skills Json
 
   @@index([username])
   @@index([username, selected])
+}
+
+model UserEquipment {
+  username  String @id
+  inventory Json
+  worn      Json
 }
 
 // TODO: ITEM LIBRARY

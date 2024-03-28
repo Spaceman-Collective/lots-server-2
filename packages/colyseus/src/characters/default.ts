@@ -18,13 +18,16 @@ export const character = {
         staminaRecovery: 10,
     },
     stats: {
-        damage: 1,
+        damageMin: 1,
+        damageMax: 100,
+        dodge: 0,
         accuracy: 10000, // out of 10k
         range: 100,
         speed: 2, //attacks per 10 ticks
         critChance: 10, // out of 10k,
         critMultiplier: 2,
-        damageType: "PHYS"
+        damageType: "PHYS",
+        weaponType: "FIGHTING"
     },
     skills: {
         fighting: 1,
@@ -32,18 +35,5 @@ export const character = {
         magic: 1,
         firearms: 1,
         tech: 1
-    },
-    inventory: {
-        slots: 10,
-        // @ts-ignore
-        items: [],
-    },
-    worn: {
-        head: "",
-        torso: "",
-        legs: "",
-        boots: "",
-        mainhand: "",
-        offhand: ""
     }
 }

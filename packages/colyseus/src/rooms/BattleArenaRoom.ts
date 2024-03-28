@@ -5,7 +5,7 @@ import { PrismaClient } from '@prisma/client';
 import { jwtVerify } from "jose";
 import { plainToInstance } from "class-transformer";
 import { UserSchema } from "../schema/User";
-import { ActionArraySchema, ActionSchema } from "../schema/Action";
+import { ActionSchema } from "../schema/Action";
 import { move, resolveMove } from "../handlers/move";
 import { ArraySchema } from "@colyseus/schema";
 const prisma = new PrismaClient();
@@ -80,6 +80,7 @@ export class BattleArenaRoom extends Room<BattleArenaRoomStateSchema> {
             }
           }
         } catch (e: any) {
+          console.error(e.message);
           client.send("error", JSON.stringify({ error: e.message }));
         }
       });
@@ -106,32 +107,36 @@ export class BattleArenaRoom extends Room<BattleArenaRoomStateSchema> {
 
   async processActionQ(tick: string, actions: ArraySchema<ActionSchema>) {
     for (let action of actions.toArray()) {
-      switch (action.actionType) {
-        case "MOVE":
-          await resolveMove(this.state, action);
-          break;
-        case "ATTACK":
-          break;
-        case "CONSUME":
-          break;
-      }
-      this.state.clientCurrentAction.delete(action.clientId);
-      if (this.state.clientBufferedAction.has(action.clientId)) {
-        // if there's an action q'd up, add it to current action and process it
-        const newAction = this.state.clientBufferedAction.get(action.clientId);
-        switch (newAction.actionType) {
+      try {
+        switch (action.actionType) {
           case "MOVE":
-            await move(this.state, this.clients.getById(newAction.clientId), JSON.parse(newAction.payload), newAction.reqId);
+            await resolveMove(this.state, action);
             break;
           case "ATTACK":
             break;
           case "CONSUME":
             break;
         }
-        this.state.clientBufferedAction.delete(action.clientId);
+        this.state.clientCurrentAction.delete(action.clientId);
+        if (this.state.clientBufferedAction.has(action.clientId)) {
+          // if there's an action q'd up, add it to current action and process it
+          const newAction = this.state.clientBufferedAction.get(action.clientId);
+          switch (newAction.actionType) {
+            case "MOVE":
+              await move(this.state, this.clients.getById(newAction.clientId), JSON.parse(newAction.payload), newAction.reqId);
+              break;
+            case "ATTACK":
+              break;
+            case "CONSUME":
+              break;
+          }
+          this.state.clientBufferedAction.delete(action.clientId);
+        }
+        this.state.tickQ.delete(tick);
+      } catch (e: any) {
+        this.clients.getById(action.clientId).send("error", JSON.stringify({ error: e.message }));
       }
     }
-    this.state.tickQ.delete(tick);
   }
 
   async onJoin(client: Client, options: any) {
@@ -184,6 +189,12 @@ export class BattleArenaRoom extends Room<BattleArenaRoomStateSchema> {
         throw new Error("User doesn't have a character selected");
       }
 
+      const userInventory = await prisma.userEquipment.findUnique({
+        where: {
+          username: user.username
+        }
+      });
+
       this.state.users.set(client.id, plainToInstance(UserSchema, {
         username: user.username,
         displayName: user.displayName,
@@ -191,13 +202,16 @@ export class BattleArenaRoom extends Room<BattleArenaRoomStateSchema> {
           vitals: actor.vitals,
           stats: actor.stats,
           skills: actor.skills,
-          inventory: actor.inventory,
-          worn: actor.worn
+          inventory: userInventory.inventory,
+          worn: userInventory.worn,
+          isAlive: true,
         }
       }));
 
+      // Reverse look up
+      this.state.usernameToClientId.set(user.username, client.id);
+
     } catch (e: any) {
-      console.log(e.message);
       client.send("error", JSON.stringify({ error: e.message }));
       client.leave();
     }

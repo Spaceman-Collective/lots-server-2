@@ -4,6 +4,8 @@ import { UserSchema } from "../User";
 import { ActionArraySchema, ActionSchema } from "../Action";
 import { Map } from "../Map";
 import DefaultMap from '../../maps/default';
+import { PrismaClient } from '@prisma/client';
+const prisma = new PrismaClient();
 
 export class BattleArenaRoomStateSchema extends Schema {
     @type("uint64") ticks: number;
@@ -13,10 +15,10 @@ export class BattleArenaRoomStateSchema extends Schema {
 
     // Client ID => User Object => Actor they control
     @type({ map: UserSchema }) users = new MapSchema<UserSchema>();
+    @type({ map: "string" }) usernameToClientId = new MapSchema<string>();
     @type("boolean") inLobby: boolean;
 
     // Actor Queue System
-
     // Client Current Action (clientId => action)
     @type({ map: ActionSchema }) clientCurrentAction = new MapSchema<ActionSchema>();
     @type({ map: ActionSchema }) clientBufferedAction = new MapSchema<ActionSchema>();
@@ -62,5 +64,37 @@ export class BattleArenaRoomStateSchema extends Schema {
         }
 
         this.clientCurrentAction.set(action.clientId, action);
+    }
+
+    async processCharacterDeath(username: string) {
+        // Set character to dead
+        const targetUser = this.users.get(this.usernameToClientId.get(username)).actor.isAlive = false;
+        // Reduce character amount from user characters
+        const selectedCharacter = await prisma.userCharacters.findFirst({
+            where: {
+                username,
+                selected: true
+            }
+        });
+
+        if (selectedCharacter.amount > 1) {
+            await prisma.userCharacters.update({
+                where: {
+                    id: selectedCharacter.id,
+                },
+                data: {
+                    amount: {
+                        decrement: 1
+                    }
+                }
+            })
+        } else if (selectedCharacter.amount == 1) {
+            await prisma.userCharacters.delete({
+                where: { id: selectedCharacter.id }
+            })
+        } //if -1 then they have infinite of that character
+
+        // Dump character inventory in final loot box 
+        // (each item has a 20% chance of ending up in the final lootbox)
     }
 }

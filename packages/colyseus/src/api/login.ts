@@ -44,7 +44,6 @@ export async function createAccount(req: Request, res: Response) {
                 clientId: ""
             }
         });
-        console.log("New user created: ", newUser);
 
         const character = await prisma.userCharacters.create({
             data: {
@@ -54,11 +53,23 @@ export async function createAccount(req: Request, res: Response) {
                 vitals: DEFAULT_CHARACTER.vitals,
                 stats: DEFAULT_CHARACTER.stats,
                 skills: DEFAULT_CHARACTER.skills,
-                inventory: DEFAULT_CHARACTER.inventory,
-                worn: DEFAULT_CHARACTER.worn
             }
         })
-        console.log("New characters given to user: ", character);
+
+        await prisma.userEquipment.create({
+            data: {
+                username: createAccountInfo.username,
+                inventory: [],
+                worn: {
+                    head: "",
+                    torso: "",
+                    legs: "",
+                    boots: "",
+                    mainhand: "",
+                    offhand: "",
+                }
+            }
+        })
 
         res.status(200).json({ success: true });
     } catch (e: any) {
