@@ -1,4 +1,4 @@
-import { Schema, MapSchema, type } from "@colyseus/schema";
+import { Schema, MapSchema, Context } from "@colyseus/schema";
 import { RoomOptionsSchema } from "./RoomOptions";
 import { UserSchema } from "../User";
 import { ActionArraySchema, ActionSchema } from "../Action";
@@ -6,6 +6,8 @@ import { Map } from "../Map";
 import DefaultMap from '../../maps/default';
 import { PrismaClient } from '@prisma/client';
 const prisma = new PrismaClient();
+
+const type = Context.create();
 
 export class BattleArenaRoomStateSchema extends Schema {
     @type("uint64") ticks: number;
@@ -26,7 +28,6 @@ export class BattleArenaRoomStateSchema extends Schema {
     // Global Tick Q
     @type({ map: ActionArraySchema }) tickQ = new MapSchema<ActionArraySchema>();
 
-
     constructor(
         ownerUserName: string,
         password: string,
@@ -38,7 +39,7 @@ export class BattleArenaRoomStateSchema extends Schema {
         this.roomOptions.ownerUserName = ownerUserName;
         this.roomOptions.password = password;
         this.roomOptions.maxPlayers = maxPlayers;
-        this.roomOptions.map = map;
+        this.roomOptions.mapName = map;
         this.inLobby = true;
 
         switch (map) {

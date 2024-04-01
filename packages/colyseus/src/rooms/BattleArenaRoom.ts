@@ -9,7 +9,6 @@ import { ActionSchema } from "../schema/Action";
 import { move, resolveMove } from "../handlers/move";
 import { ArraySchema } from "@colyseus/schema";
 import { attack, resolveAttack } from "../handlers/attack";
-import { InventorySchema, WornSchema } from "../schema/Actor";
 const prisma = new PrismaClient();
 
 const CreateRoomMsg = z.object({
@@ -26,8 +25,9 @@ const JoinRoomMsg = z.object({
 });
 
 export class BattleArenaRoom extends Room<BattleArenaRoomStateSchema> {
-  maxClients = 1;
+  maxClients = 5;
   patchRate: number = 100; //default is 50ms, we want to match it to tick rate
+  autoDispose = false;
 
   onCreate(options: any) {
     try {
@@ -59,7 +59,7 @@ export class BattleArenaRoom extends Room<BattleArenaRoomStateSchema> {
 
       const CharacterActionMsg = z.object({
         reqId: z.string(),
-        type: z.enum(["MOVE", "ATTACK", "CONSUME"]),
+        type: z.enum(["MOVE", "ATTACK", "ITEM"]),
         payload: z.any()
       });
 
@@ -80,7 +80,7 @@ export class BattleArenaRoom extends Room<BattleArenaRoomStateSchema> {
               case "ATTACK":
                 await attack(this.state, client, msg.payload, msg.reqId)
                 break;
-              case "CONSUME":
+              case "ITEM":
                 break;
             }
           }
@@ -89,7 +89,6 @@ export class BattleArenaRoom extends Room<BattleArenaRoomStateSchema> {
           client.send("error", JSON.stringify({ error: e.message }));
         }
       });
-
 
       console.log("Room created successfully!")
     } catch (e: any) {
@@ -158,8 +157,8 @@ export class BattleArenaRoom extends Room<BattleArenaRoomStateSchema> {
         } else {
           user[1].actor.vitals.stamina = newStamina;
         }
-      } catch (e) {
-
+      } catch (e: any) {
+        this.clients.getById(this.state.usernameToClientId.get(user[1].username)).send("error", JSON.stringify({ error: e.message }))
       }
     }
   }
@@ -174,7 +173,7 @@ export class BattleArenaRoom extends Room<BattleArenaRoomStateSchema> {
           case "ATTACK":
             await resolveAttack(this.state, action);
             break;
-          case "CONSUME":
+          case "ITEM":
             break;
         }
         this.state.clientCurrentAction.delete(action.clientId);
@@ -188,7 +187,7 @@ export class BattleArenaRoom extends Room<BattleArenaRoomStateSchema> {
             case "ATTACK":
               await attack(this.state, this.clients.getById(newAction.clientId), JSON.parse(newAction.payload), newAction.reqId)
               break;
-            case "CONSUME":
+            case "ITEM":
               break;
           }
           this.state.clientBufferedAction.delete(action.clientId);
@@ -280,16 +279,21 @@ export class BattleArenaRoom extends Room<BattleArenaRoomStateSchema> {
     }
   }
 
-  async onLeave(client: Client, consented: boolean) {
+  onLeave(client: Client, consented: boolean) {
     try {
       const userObj = this.state.users.get(client.id);
       // Reset Client ID for user
-      await prisma.user.update({
+      prisma.user.update({
         where: {
           username: userObj.username
         },
         data: {
           clientId: "not_logged_in"
+        }
+      }).then(() => {
+        console.log(`${client.id} logged out`);
+        if (this.clients.length == 0) {
+          this.disconnect();
         }
       })
     } catch (e: any) {

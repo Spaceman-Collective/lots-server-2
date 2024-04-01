@@ -1,5 +1,8 @@
-import { Schema, type } from "@colyseus/schema";
+import { Schema, Context } from "@colyseus/schema";
 import { nanoid } from "nanoid";
+
+
+const type = Context.create();
 
 /**
  * Tracks position in the world

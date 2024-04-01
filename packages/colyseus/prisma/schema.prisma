@@ -41,8 +41,21 @@ model UserEquipment {
   username  String @id
   inventory Json
   worn      Json
-  vault     Json
+  vault     Json // {[itemId:string] : number}
 }
 
-// TODO: ITEM LIBRARY
-// TODO: UserItemInventory
+model ItemLibrary {
+  id        String   @id
+  type      ItemType
+  img       String //2d Image File
+  model     String //3d Model File
+  animation String //Animation to use when this item is used
+  data      Json // See ItemSchema
+}
+
+enum ItemType {
+  worn
+  buff
+  ammo
+  castable
+}

@@ -1,7 +1,8 @@
-import { Schema, ArraySchema, type } from "@colyseus/schema";
+import { Schema, ArraySchema, Context } from "@colyseus/schema";
 import { EntitySchema } from "./Entity";
 import { Type as ClassType } from "class-transformer";
 
+const type = Context.create();
 
 // Tracks various health pools and run energy
 export class VitalsSchema extends Schema {
@@ -47,7 +48,9 @@ export class StatsSchema extends Schema {
     @type("number") critMultiplier: number; //1.2 would be stored as 120 so we can do full ints (divide by 100 in the resolve)
     @type("string") damageType: "PHYS" | "TECH" | "MAGIC"; //what health pool the damage applies to
     //always attack with your mainhand weapon, offhand just gives boost to stats
-    @type("string") weaponType: "FIGHTING" | "RANGED" | "MAGIC" | "FIREARMS" | "TECH"
+    @type("string") weaponType: "FIGHTING" | "RANGED" | "MAGIC" | "FIREARMS" | "TECH";
+    @type("boolean") ammoTypeRequired: string; // what type of ammo is required for the weapon
+    @type("number") ammoInventoryIdx: number; //idx of the item used as ammo
 }
 
 // Adds bonuses when using specific type of weapons

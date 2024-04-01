@@ -61,6 +61,8 @@ export async function resolveAttack(state: BattleArenaRoomStateSchema, action: A
         // Player was in range when the attack was issued, so even if they move the attack will carry through
         // We don't need to look up items, just do offensive stats vs vitals
 
+        // TODO: Subtract ammo if ammo type is set
+
         // Does the attack land? 
         // Roll a number between (1,10k), if under the accuracy number, then it's a hit!
         // Add 250*skill to the roll, means at max level (10), you have 25% hit chance even if you roll a 0

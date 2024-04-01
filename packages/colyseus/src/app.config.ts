@@ -8,6 +8,7 @@ import { WebSocketTransport } from "@colyseus/ws-transport";
 import { BattleArenaRoom } from "./rooms/BattleArenaRoom";
 import { createAccount, login } from "./api/login";
 import { getCharacters, selectCharacter } from "./api/selectCharacter";
+import { TestRoom } from "./rooms/TestRoom";
 
 export default config({
 
@@ -15,7 +16,8 @@ export default config({
         /**
          * Define your room handlers:
          */
-        gameServer.define('battlearena', BattleArenaRoom);
+        gameServer.define("battlearena", BattleArenaRoom);
+        gameServer.define("testroom", TestRoom);
     },
 
     initializeTransport: function (opts) {

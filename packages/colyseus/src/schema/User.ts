@@ -1,6 +1,8 @@
-import { Schema, type } from "@colyseus/schema";
+import { Schema, Context } from "@colyseus/schema";
 import { ActorSchema } from "./Actor";
 import { Type as ClassType } from "class-transformer";
+
+const type = Context.create();
 
 /**
  * Tracks position in the world

@@ -8,4 +8,5 @@ for file in rooms/*.ts; do
 done
 
 
+
 zip -r lots-unity-schemas.zip lots-unity-schemas/

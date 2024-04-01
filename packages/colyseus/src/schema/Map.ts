@@ -1,4 +1,6 @@
-import { Schema, ArraySchema, type } from "@colyseus/schema";
+import { Schema, ArraySchema, Context } from "@colyseus/schema";
+
+const type = Context.create();
 
 export class TileSquare extends Schema {
     @type("float32") movingSpeed: number;
