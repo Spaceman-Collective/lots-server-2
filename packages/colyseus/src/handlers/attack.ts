@@ -90,6 +90,7 @@ export async function resolveAttack(state: BattleArenaRoomStateSchema, action: A
         if (atkRoll > user.actor.stats.accuracy) {
             throw new Error("Attack didn't land");
         }
+        console.log(`${user.username} landed a ${atkRoll} attack roll on ${targetUser.username}`);
 
         // How much damage does the attack do?
         // Did it land a crit?
@@ -122,8 +123,10 @@ export async function resolveAttack(state: BattleArenaRoomStateSchema, action: A
         if (dmgRoll < 0) {
             throw new Error("Damage less than 0, something went wrong!");
         }
+        console.log(`${user.username} landed a ${dmgRoll} damage roll on ${targetUser.username}`);
+
         // Which pools of health does the target user lose?
-        let healthDmg = 0;
+        let healthDmg = dmgRoll;
         switch (user.actor.stats.damageType) {
             case "MAGIC":
                 if (targetUser.actor.vitals.barrier > 0) {
@@ -153,8 +156,11 @@ export async function resolveAttack(state: BattleArenaRoomStateSchema, action: A
                 }
                 break;
         }
+        console.log("Health DMG: ", healthDmg);
         if (healthDmg >= targetUser.actor.vitals.health) {
             // Target User is DEAD
+            targetUser.actor.vitals.health = 0;
+            console.log(`${targetUser.username} died`)
             await state.processCharacterDeath(targetUser.username);
         } else {
             targetUser.actor.vitals.health -= healthDmg;

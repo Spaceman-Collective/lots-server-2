@@ -114,8 +114,8 @@ export class BattleArenaRoom extends Room<BattleArenaRoomStateSchema> {
 
     // Get the EffectsQ for this Tick and process it
 
-    // if %10 (every second), run the vitals recovery
-    if (this.state.ticks % 10 == 0) {
+    // if %1000 (every 100 second), run the vitals recovery
+    if (this.state.ticks % 1000 == 0) {
       this.vitalsRecovery();
     }
   }

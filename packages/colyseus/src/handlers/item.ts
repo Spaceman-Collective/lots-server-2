@@ -4,7 +4,7 @@ import { z } from 'zod';
 import { plainToInstance } from "class-transformer";
 import { PrismaClient } from "@prisma/client";
 import { ItemSchema, WornItemSchema } from "../schema/Item";
-import { ActorSchema } from "../schema/Actor";
+import { ActorSchema, SkillsSchema, VitalsSchema } from "../schema/Actor";
 const prisma = new PrismaClient();
 
 /**
@@ -41,9 +41,9 @@ export async function item(state: BattleArenaRoomStateSchema, client: Client, ms
         switch (itemData.itemType) {
             case "WORN":
                 // If it's WORN, equip/dequip, no reason to add to TickQ
-
-                //check 
-
+                // process dequip of the old item
+                // set new item to slot
+                // process equip of the new item
                 break;
             case "BUFF":
                 // If it's BUFF, add 2 to tick Q, one after buffCastDuration to apply the effect, and then buffDuration after to inverse it
@@ -66,13 +66,35 @@ export async function processEquip(actor: ActorSchema, item: WornItemSchema) {
     try {
         // Check that equip slot is empty
         if (actor.worn[item.wornArea] != "") {
-
+            throw new Error("Must dequip first!")
         }
         // Check Requirements 
+        if (!checkRequirements(item.requirements, actor.skills)) {
+            throw new Error("Doesn't meet requirements!")
+        }
         // Apply buffs
+
     } catch (e: any) {
         throw e;
     }
+}
+
+function checkRequirements(requirements: SkillsSchema, currentSkills: SkillsSchema): boolean {
+    if (
+        currentSkills.fighting < requirements.fighting ||
+        currentSkills.ranged < requirements.ranged ||
+        currentSkills.magic < requirements.magic ||
+        currentSkills.firearms < requirements.firearms ||
+        currentSkills.tech < requirements.tech
+    ) {
+        return false;
+    } else {
+        return true;
+    }
+}
+
+export async function modifyVitals(vitals: VitalsSchema, modifications: VitalsSchema) {
+    let keys = Object.keys(vitals.toJSON());
 }
 
 export async function processDequip() { }
