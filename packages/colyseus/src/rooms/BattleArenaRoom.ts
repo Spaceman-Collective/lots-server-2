@@ -292,6 +292,8 @@ export class BattleArenaRoom extends Room<BattleArenaRoomStateSchema> {
         }
       }).then(() => {
         console.log(`${client.id} logged out`);
+        this.state.users.delete(client.sessionId);
+        this.state.usernameToClientId.delete(userObj.username);
         if (this.clients.length == 0) {
           this.disconnect();
         }

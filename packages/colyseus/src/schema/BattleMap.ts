@@ -3,14 +3,14 @@ import { Schema, ArraySchema, Context } from "@colyseus/schema";
 const type = Context.create();
 
 export class TileSquare extends Schema {
-    @type("float32") movingSpeed: number;
+    @type("number") movingSpeed: number;
 
     public setMovingSpeed(movingSpeed: number) {
         this.movingSpeed = movingSpeed;
     }
 }
 
-export class Map extends Schema {
+export class BattleMap extends Schema {
     @type("string") name: string;
     @type([TileSquare]) tiles = new ArraySchema<TileSquare>();
     @type("number") width: number;

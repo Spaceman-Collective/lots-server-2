@@ -15,10 +15,13 @@ const MoveMsg = z.object({
 export async function move(state: BattleArenaRoomStateSchema, client: Client, msg: any, reqId: string) {
     try {
         const { targetTile } = MoveMsg.parse(msg);
+
+        /* TODO: Map logic implementation later for obstructions
         // Check if Tile Is movable
-        if (state.map.getXY(targetTile.x, targetTile.y).movingSpeed < 0) {
+        if (state.bmap.getXY(targetTile.x, targetTile.y).movingSpeed < 0) {
             throw new Error("Tile is obstructed!");
         }
+        */
 
         const actor = state.users.get(client.id).actor;
         // Check if distance to tile is 1

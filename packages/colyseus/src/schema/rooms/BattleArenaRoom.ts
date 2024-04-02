@@ -2,7 +2,7 @@ import { Schema, MapSchema, Context } from "@colyseus/schema";
 import { RoomOptionsSchema } from "./RoomOptions";
 import { UserSchema } from "../User";
 import { ActionArraySchema, ActionSchema } from "../Action";
-import { Map } from "../Map";
+import { BattleMap } from "../BattleMap";
 import DefaultMap from '../../maps/default';
 import { PrismaClient } from '@prisma/client';
 const prisma = new PrismaClient();
@@ -13,7 +13,7 @@ export class BattleArenaRoomStateSchema extends Schema {
     @type("uint64") ticks: number;
 
     @type(RoomOptionsSchema) roomOptions: RoomOptionsSchema = new RoomOptionsSchema();
-    @type(Map) map = new Map();
+    @type(BattleMap) bmap = new BattleMap();
 
     // Client ID => User Object => Actor they control
     @type({ map: UserSchema }) users = new MapSchema<UserSchema>();
@@ -42,11 +42,14 @@ export class BattleArenaRoomStateSchema extends Schema {
         this.roomOptions.mapName = map;
         this.inLobby = true;
 
+        // TODO: Map logic implementation later for obstructions
+        /* 
         switch (map) {
             case "DEFAULT":
-                this.map = DefaultMap;
+                this.bmap = DefaultMap;
                 break;
         }
+        */
     }
 
     addToTickQ(
