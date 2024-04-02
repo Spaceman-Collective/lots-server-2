@@ -49,7 +49,7 @@ export class StatsSchema extends Schema {
     @type("string") damageType: "PHYS" | "TECH" | "MAGIC"; //what health pool the damage applies to
     //always attack with your mainhand weapon, offhand just gives boost to stats
     @type("string") weaponType: "FIGHTING" | "RANGED" | "MAGIC" | "FIREARMS" | "TECH";
-    @type("boolean") ammoTypeRequired: string; // what type of ammo is required for the weapon
+    @type("string") ammoTypeRequired: string; // what type of ammo is required for the weapon
     @type("number") ammoInventoryIdx: number; //idx of the item used as ammo
 }
 

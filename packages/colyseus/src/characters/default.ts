@@ -27,7 +27,9 @@ export const character = {
         critChance: 10, // out of 10k,
         critMultiplier: 2,
         damageType: "PHYS",
-        weaponType: "FIGHTING"
+        weaponType: "FIGHTING",
+        ammoTypeRequired: "",
+        ammoInventoryIdx: -1,
     },
     skills: {
         fighting: 1,
