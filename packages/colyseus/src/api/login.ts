@@ -59,15 +59,15 @@ export async function createAccount(req: Request, res: Response) {
         await prisma.userEquipment.create({
             data: {
                 username: createAccountInfo.username,
-                inventory: JSON.stringify({ items: [] }),
-                worn: JSON.stringify({
+                inventory: { items: [] },
+                worn: {
                     head: "",
                     torso: "",
                     legs: "",
                     boots: "",
                     mainhand: "",
                     offhand: "",
-                }),
+                },
                 vault: JSON.stringify([])
             }
         })

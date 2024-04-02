@@ -253,8 +253,8 @@ export class BattleArenaRoom extends Room<BattleArenaRoomStateSchema> {
           vitals: actor.vitals,
           stats: actor.stats,
           skills: actor.skills,
-          inventory: JSON.parse(userInventory.inventory),
-          worn: JSON.parse(userInventory.worn),
+          inventory: userInventory.inventory,
+          worn: userInventory.worn,
           isAlive: true,
         }
       }));
