@@ -39,7 +39,7 @@ export class BattleArenaRoom extends Room<BattleArenaRoomStateSchema> {
         msg.map
       ));
 
-      this.maxClients = msg.maxPlayers;
+      this.maxClients = msg.maxPlayers ? msg.maxPlayers : 5;
 
       // Sets the tick rate
       this.setSimulationInterval((dt) => this.update(dt), 100);
@@ -203,7 +203,7 @@ export class BattleArenaRoom extends Room<BattleArenaRoomStateSchema> {
     try {
       const msg = JoinRoomMsg.parse(options);
       // Check room password
-      if (this.state.roomOptions.password && msg.password != this.state.roomOptions.password) {
+      if (this.state.roomOptions.password != "" && msg.password != this.state.roomOptions.password) {
         throw new Error("Wrong Password!")
       }
       // Check max players in a room

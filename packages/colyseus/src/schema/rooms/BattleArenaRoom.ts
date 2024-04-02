@@ -37,8 +37,8 @@ export class BattleArenaRoomStateSchema extends Schema {
         super();
         this.ticks = 0;
         this.roomOptions.ownerUserName = ownerUserName;
-        this.roomOptions.password = password;
-        this.roomOptions.maxPlayers = maxPlayers;
+        this.roomOptions.password = password ? password : "";
+        this.roomOptions.maxPlayers = maxPlayers ? maxPlayers : 5;
         this.roomOptions.mapName = map;
         this.inLobby = true;
 
