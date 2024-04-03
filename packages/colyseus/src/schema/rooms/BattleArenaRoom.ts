@@ -80,23 +80,11 @@ export class BattleArenaRoomStateSchema extends Schema {
                 selected: true
             }
         });
-
-        if (selectedCharacter.amount > 1) {
-            await prisma.userCharacters.update({
-                where: {
-                    id: selectedCharacter.id,
-                },
-                data: {
-                    amount: {
-                        decrement: 1
-                    }
-                }
-            })
-        } else if (selectedCharacter.amount == 1) {
-            await prisma.userCharacters.delete({
-                where: { id: selectedCharacter.id }
-            })
-        } //if -1 then they have infinite of that character
+        await prisma.userCharacters.delete({
+            where: {
+                id: selectedCharacter.id
+            }
+        })
 
         // Dump character inventory in final loot box 
         // (each item has a 20% chance of ending up in the final lootbox)

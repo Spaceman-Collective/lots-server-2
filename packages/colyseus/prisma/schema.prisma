@@ -27,14 +27,23 @@ model UserCharacters {
   id       String  @id @default(uuid())
   username String
   selected Boolean
-  amount   Int //-1 means infinite
 
   vitals Json
   stats  Json
   skills Json
 
+  rarity CharacterRarity
+
   @@index([username])
   @@index([username, selected])
+}
+
+enum CharacterRarity {
+  COMMON
+  UNCOMMON
+  RARE
+  LEGENDARY
+  DEITY
 }
 
 model UserEquipment {
@@ -51,6 +60,7 @@ model ItemLibrary {
   model     String //3d Model File
   animation String //Animation to use when this item is used
   data      Json // See ItemSchema
+  dropAmt   Int // the amount of the item that's dropped to the user during an airdrop (usually a stack size)
 }
 
 enum ItemType {

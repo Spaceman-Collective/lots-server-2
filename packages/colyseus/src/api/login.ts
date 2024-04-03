@@ -5,12 +5,13 @@
 
 import { Request, Response } from "express";
 import { z } from "zod";
-import { PrismaClient } from '@prisma/client';
+import { CharacterRarity, PrismaClient } from '@prisma/client';
 const prisma = new PrismaClient();
 import { randomBytes } from 'crypto';
 import { scryptSync } from 'crypto';
 import { SignJWT } from "jose";
 import { character as DEFAULT_CHARACTER } from "../characters/default";
+import { getRandomCharacter } from "../characters/util";
 
 const AccountMsg = z.object({
     username: z.string(),
@@ -45,16 +46,9 @@ export async function createAccount(req: Request, res: Response) {
             }
         });
 
-        await prisma.userCharacters.create({
-            data: {
-                username: createAccountInfo.username,
-                selected: true,
-                amount: -1,
-                vitals: DEFAULT_CHARACTER.vitals,
-                stats: DEFAULT_CHARACTER.stats,
-                skills: DEFAULT_CHARACTER.skills,
-            }
-        })
+        let commonChar = getRandomCharacter(0);
+        commonChar.username = createAccountInfo.username;
+        await prisma.userCharacters.create({ data: commonChar })
 
         await prisma.userEquipment.create({
             data: {

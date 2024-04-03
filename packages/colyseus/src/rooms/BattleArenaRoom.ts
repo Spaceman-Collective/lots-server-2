@@ -10,6 +10,7 @@ import { move, resolveMove } from "../handlers/move";
 import { ArraySchema } from "@colyseus/schema";
 import { attack, resolveAttack } from "../handlers/attack";
 import { item, resolveItem } from "../handlers/item";
+import { getRandomCharacter } from "../characters/util";
 const prisma = new PrismaClient();
 
 const CreateRoomMsg = z.object({
@@ -29,6 +30,9 @@ export class BattleArenaRoom extends Room<BattleArenaRoomStateSchema> {
   maxClients = 5;
   patchRate: number = 100; //default is 50ms, we want to match it to tick rate
   autoDispose = false;
+
+  maxAirdropsPerRoom = 25;
+  currentGlobalDrops = 0;
 
   onCreate(options: any) {
     try {
@@ -122,6 +126,69 @@ export class BattleArenaRoom extends Room<BattleArenaRoomStateSchema> {
     }
   }
 
+  /**
+   * Every attack, 5% chance that you get an airdrop, until max airdrops per room have been reached;
+   */
+  async airdrop(username: string) {
+    try {
+      if (this.currentGlobalDrops >= this.maxAirdropsPerRoom) {
+        return;
+      }
+
+      const roll = Math.floor(Math.random() * 10001);
+      const CHARACTER_THRESHOLD = 100;
+      const ITEM_THRESHOLD = 500;
+      const clientId = this.state.usernameToClientId.get(username)
+
+      if (roll < CHARACTER_THRESHOLD) {
+        // if (0-100, it's a character)
+        let character = getRandomCharacter(roll);
+        character.username = username;
+        await prisma.userCharacters.create({ data: character })
+        this.clients.getById(clientId).send("airdrop", JSON.stringify({
+          type: "CHARACTER",
+          data: character
+        }))
+
+      } else if (roll < ITEM_THRESHOLD) {
+        // if (101-500) it's an item
+        const itemCount = await prisma.itemLibrary.count();
+        const randomIndex = Math.floor(Math.random() * itemCount);
+        const randomItem = await prisma.itemLibrary.findFirst({ skip: randomIndex });
+
+        const userEquipment = await prisma.userEquipment.findUnique({ where: { username } });
+        const vault: {
+          [itemId: string]: number
+        } = JSON.parse(JSON.stringify(userEquipment.vault));
+
+        if (vault[randomItem.id]) {
+          vault[randomItem.id] += randomItem.dropAmt
+        } else {
+          vault[randomItem.id] = randomItem.dropAmt
+        }
+
+        await prisma.userEquipment.update({
+          where: { username },
+          data: {
+            vault
+          }
+        })
+        this.clients.getById(clientId).send("airdrop", JSON.stringify({
+          type: "ITEM",
+          data: randomItem
+        }))
+      }
+
+
+      // in either case, if an airdrop happens, update currentGlobalDrops
+      if (roll < ITEM_THRESHOLD) {
+        this.currentGlobalDrops += 1;
+      }
+    } catch (e) {
+      // fail silently
+    }
+  }
+
   async vitalsRecovery() {
     for (let user of this.state.users.entries()) {
       try {
@@ -174,6 +241,7 @@ export class BattleArenaRoom extends Room<BattleArenaRoomStateSchema> {
             break;
           case "ATTACK":
             await resolveAttack(this.state, action);
+            await this.airdrop(this.state.users.get(action.clientId).username);
             break;
           case "ITEM":
             await resolveItem(this.state, action);
