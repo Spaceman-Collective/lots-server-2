@@ -25,7 +25,7 @@ export class WornItemSchema extends ItemSchema {
 
 export class BuffItemSchema extends ItemSchema {
     @type("number") buffCastTime: number; //number of ticks for the animation to resovle before it takes effect
-    @type("number") tickDuration: number;
+    @type("number") tickDuration: number; // if -1, then permanent and doesn't require reverse
 
     @ClassType(() => VitalsSchema)
     @type(VitalsSchema) buffVitalsModified: VitalsSchema = new VitalsSchema();
@@ -43,10 +43,12 @@ export class AmmoItemSchema extends ItemSchema {
 
 export class CastableItemSchema extends ItemSchema {
     @type("number") castableCastTime: number; //number of ticks for the animation to resovle before it takes effect
-    @type("number") tileRange: number;
-    @type("number") tileRadiusEffect: number; //AoE if > 0
-    @type("number") tickDuration: number;
+    @type("number") tileRange: number; // AoE if > 0
+    @type("number") castDuration: number;
 
     @ClassType(() => StatsSchema)
     @type(StatsSchema) castableStats: StatsSchema = new StatsSchema();
+
+    @ClassType(() => VitalsSchema)
+    @type(VitalsSchema) castableVitals: VitalsSchema = new VitalsSchema();
 }

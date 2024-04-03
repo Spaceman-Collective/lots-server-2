@@ -3,7 +3,7 @@ import { BattleArenaRoomStateSchema } from "../schema/rooms/BattleArenaRoom";
 import { z } from 'zod';
 import { plainToInstance } from "class-transformer";
 import { PrismaClient } from "@prisma/client";
-import { AmmoItemSchema, BuffItemSchema, ItemSchema, WornItemSchema } from "../schema/Item";
+import { AmmoItemSchema, BuffItemSchema, CastableItemSchema, ItemSchema, WornItemSchema } from "../schema/Item";
 import { ActorSchema, SkillsSchema, StatsSchema, VitalsSchema } from "../schema/Actor";
 import { ActionSchema } from "../schema/Action";
 const prisma = new PrismaClient();
@@ -15,12 +15,14 @@ const prisma = new PrismaClient();
  */
 const ConsumeMsg = z.object({
     inventoryIdx: z.number(),
-    targetUsername: z.string().optional(),
-    targetTileIdx: z.number().optional(), //for castables
+    targetTile: z.object({
+        x: z.number(),
+        y: z.number(),
+    }).optional(), //for castables
 })
 
 interface ItemServerPayload {
-    effectType: "BUFF"
+    effectType: "BUFF" | "CAST"
 }
 
 interface BuffServerPayload extends ItemServerPayload {
@@ -30,9 +32,16 @@ interface BuffServerPayload extends ItemServerPayload {
     skillsModified: any | null,
 }
 
+interface CastServerPayload extends ItemServerPayload {
+    actorGUID: string,
+    vitalsModified: any | null,
+    statsModified: any | null,
+    skillsModified: any | null,
+}
+
 export async function item(state: BattleArenaRoomStateSchema, client: Client, msg: any, reqId: string) {
     try {
-        const { inventoryIdx, targetUsername, targetTileIdx } = ConsumeMsg.parse(msg);
+        const { inventoryIdx, targetTile } = ConsumeMsg.parse(msg);
 
         // Fetch the item from the database
         let itemId = "";
@@ -41,7 +50,6 @@ export async function item(state: BattleArenaRoomStateSchema, client: Client, ms
         } catch (e: any) {
             throw new Error("Item not found!")
         }
-
 
         const item = await prisma.itemLibrary.findUniqueOrThrow({
             where: { id: itemId }
@@ -80,7 +88,6 @@ export async function item(state: BattleArenaRoomStateSchema, client: Client, ms
                 // If it's BUFF, add 2 to tick Q, one after buffCastDuration to apply the effect, and then buffDuration after to inverse it
                 const buffItem = plainToInstance(BuffItemSchema, item.data);
                 const takesEffectTick = state.ticks + buffItem.buffCastTime;
-                const expiresTick = takesEffectTick + buffItem.tickDuration;
                 state.addToTickQ(
                     takesEffectTick,
                     plainToInstance(ActionSchema, {
@@ -92,6 +99,7 @@ export async function item(state: BattleArenaRoomStateSchema, client: Client, ms
                         tickEndsAt: takesEffectTick.toString(),
                         serverPayload: JSON.stringify({
                             effectType: "BUFF",
+                            targetUsername: state.users.get(client.sessionId).username, //target self
                             statsModified: buffItem.buffStatsModified.toJSON(),
                             vitalsModified: buffItem.buffVitalsModified.toJSON(),
                             skillsModified: null,
@@ -99,24 +107,28 @@ export async function item(state: BattleArenaRoomStateSchema, client: Client, ms
                     })
                 );
 
-                state.addToTickQ(
-                    takesEffectTick,
-                    plainToInstance(ActionSchema, {
-                        actionType: "ITEM",
-                        reqId,
-                        clientId: client.sessionId,
-                        payload: JSON.stringify(msg),
-                        tickStartedAt: takesEffectTick.toString(),
-                        tickEndsAt: expiresTick.toString(),
-                        serverPayload: JSON.stringify({
-                            effectType: "BUFF",
-                            statsModified: (inverseStats(buffItem.buffStatsModified)).toJSON(),
-                            vitalsModified: (inverseVitals(buffItem.buffVitalsModified)).toJSON(),
-                            skillsModified: null,
-                        } as BuffServerPayload)
-                    })
-                );
-
+                //if duration is -1, then no need to reverse
+                if (buffItem.tickDuration != -1) {
+                    const expiresTick = takesEffectTick + buffItem.tickDuration;
+                    state.addToTickQ(
+                        takesEffectTick,
+                        plainToInstance(ActionSchema, {
+                            actionType: "ITEM",
+                            reqId,
+                            clientId: client.sessionId,
+                            payload: JSON.stringify(msg),
+                            tickStartedAt: takesEffectTick.toString(),
+                            tickEndsAt: expiresTick.toString(),
+                            serverPayload: JSON.stringify({
+                                effectType: "BUFF",
+                                targetUsername: state.users.get(client.sessionId).username,
+                                statsModified: (inverseStats(buffItem.buffStatsModified)).toJSON(),
+                                vitalsModified: (inverseVitals(buffItem.buffVitalsModified)).toJSON(),
+                                skillsModified: null,
+                            } as BuffServerPayload)
+                        })
+                    );
+                }
                 break;
             case "AMMO":
                 // If it's Ammo, check if it's the type required, and then set the ammoInventoryIdx to this item
@@ -128,12 +140,73 @@ export async function item(state: BattleArenaRoomStateSchema, client: Client, ms
                 break;
             case "CASTABLE":
                 // If it's castable, check range, target, etc, then wait cast duration and apply two tickQ events
+                if (!targetTile) { throw new Error("Target tile required for castables!") }
+                const castableItem = plainToInstance(CastableItemSchema, item.data);
+                const actorsInRange = findCharactersInTileRange(state, { x: targetTile.x, y: targetTile.y }, castableItem.tileRange);
+                const castTakesEffectTick = state.ticks + castableItem.castableCastTime;
+                for (let actor of actorsInRange) {
+                    state.addToTickQ(
+                        castTakesEffectTick,
+                        plainToInstance(ActionSchema, {
+                            actionType: "ITEM",
+                            reqId,
+                            clientId: client.sessionId,
+                            payload: JSON.stringify(msg),
+                            tickStartedAt: state.ticks.toString(),
+                            tickEndsAt: castTakesEffectTick.toString(),
+                            serverPayload: JSON.stringify({
+                                effectType: "CAST",
+                                actorGUID: actor.guid,
+                                statsModified: castableItem.castableStats.toJSON(),
+                                vitalsModified: castableItem.castableVitals.toJSON(),
+                                skillsModified: null,
+                            })
+                        })
+                    )
+
+                    if (castableItem.castDuration != -1) {
+                        const expiresTick = castTakesEffectTick + castableItem.castDuration;
+                        state.addToTickQ(
+                            expiresTick,
+                            plainToInstance(ActionSchema, {
+                                actionType: "ITEM",
+                                reqId,
+                                clientId: client.sessionId,
+                                payload: JSON.stringify(msg),
+                                tickStartedAt: state.ticks.toString(),
+                                tickEndsAt: expiresTick.toString(),
+                                serverPayload: JSON.stringify({
+                                    effectType: "CAST",
+                                    actorGUID: actor.guid,
+                                    statsModified: (inverseStats(castableItem.castableStats)).toJSON(),
+                                    vitalsModified: (inverseVitals(castableItem.castableVitals)).toJSON(),
+                                    skillsModified: null,
+                                })
+                            })
+                        )
+                    }
+                }
                 break;
         }
 
     } catch (e) {
         throw e;
     }
+}
+
+function findCharactersInTileRange(state: BattleArenaRoomStateSchema, targetTile: { x: number, y: number }, range: number): ActorSchema[] {
+    let actorsInRange: ActorSchema[] = [];
+    // TODO: in the future we may have non user actors in a space
+    for (let user of state.users.entries()) {
+        const distance = Math.sqrt(
+            Math.pow(targetTile.x - user[1].actor.x, 2) +
+            Math.pow(targetTile.y - user[1].actor.y, 2)
+        );
+        if (distance < range) {
+            actorsInRange.push(user[1].actor);
+        }
+    }
+    return actorsInRange;
 }
 
 export async function resolveItem(state: BattleArenaRoomStateSchema, action: ActionSchema) {
@@ -152,6 +225,27 @@ export async function resolveItem(state: BattleArenaRoomStateSchema, action: Act
 
             if (buffPayload.vitalsModified) {
                 modifyVitals(targetActor.vitals, plainToInstance(VitalsSchema, buffPayload.vitalsModified))
+            }
+        } else if (serverPayload.effectType == "CAST") {
+            const castPayload = serverPayload as CastServerPayload;
+            const getActorByGUID = (guid: string): ActorSchema => {
+                for (let user of state.users.entries()) {
+                    if (user[1].actor.guid == guid) {
+                        return user[1].actor;
+                    }
+                }
+            }
+            const targetActor = getActorByGUID(castPayload.actorGUID);
+            if (castPayload.skillsModified) {
+                modifySkills(targetActor.skills, plainToInstance(SkillsSchema, castPayload.skillsModified))
+            }
+
+            if (castPayload.statsModified) {
+                modifyStats(targetActor.stats, plainToInstance(StatsSchema, castPayload.statsModified))
+            }
+
+            if (castPayload.vitalsModified) {
+                modifyVitals(targetActor.vitals, plainToInstance(VitalsSchema, castPayload.vitalsModified))
             }
         }
     } catch (e) {
