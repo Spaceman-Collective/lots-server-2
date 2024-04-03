@@ -61,7 +61,19 @@ export async function resolveAttack(state: BattleArenaRoomStateSchema, action: A
         // Player was in range when the attack was issued, so even if they move the attack will carry through
         // We don't need to look up items, just do offensive stats vs vitals
 
-        // TODO: Subtract ammo if ammo type is set
+        // Handle Ammo Items
+        if (user.actor.stats.ammoTypeRequired != "") {
+            if (user.actor.stats.ammoInventoryIdx == -1) {
+                throw new Error(`This weapon requires ammo type: ${user.actor.stats.ammoTypeRequired}`);
+            }
+            user.actor.inventory.items[user.actor.stats.ammoInventoryIdx].amount -= 1;
+            if (user.actor.inventory.items[user.actor.stats.ammoInventoryIdx].amount == 0) {
+                // delete the ammo item
+                user.actor.inventory.items[user.actor.stats.ammoInventoryIdx] = null;
+                // set inventoryIdx = -1
+                user.actor.stats.ammoInventoryIdx = -1;
+            }
+        }
 
         // Does the attack land? 
         // Roll a number between (1,10k), if under the accuracy number, then it's a hit!

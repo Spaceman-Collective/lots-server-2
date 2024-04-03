@@ -9,6 +9,7 @@ import { ActionSchema } from "../schema/Action";
 import { move, resolveMove } from "../handlers/move";
 import { ArraySchema } from "@colyseus/schema";
 import { attack, resolveAttack } from "../handlers/attack";
+import { item, resolveItem } from "../handlers/item";
 const prisma = new PrismaClient();
 
 const CreateRoomMsg = z.object({
@@ -81,6 +82,7 @@ export class BattleArenaRoom extends Room<BattleArenaRoomStateSchema> {
                 await attack(this.state, client, msg.payload, msg.reqId)
                 break;
               case "ITEM":
+                await item(this.state, client, msg.payload, msg.reqId);
                 break;
             }
           }
@@ -114,8 +116,8 @@ export class BattleArenaRoom extends Room<BattleArenaRoomStateSchema> {
 
     // Get the EffectsQ for this Tick and process it
 
-    // if %1000 (every 100 second), run the vitals recovery
-    if (this.state.ticks % 1000 == 0) {
+    // if %600 (every 1 min), run the vitals recovery
+    if (this.state.ticks % 600 == 0) {
       this.vitalsRecovery();
     }
   }
@@ -174,6 +176,7 @@ export class BattleArenaRoom extends Room<BattleArenaRoomStateSchema> {
             await resolveAttack(this.state, action);
             break;
           case "ITEM":
+            await resolveItem(this.state, action);
             break;
         }
         this.state.clientCurrentAction.delete(action.clientId);
@@ -188,6 +191,7 @@ export class BattleArenaRoom extends Room<BattleArenaRoomStateSchema> {
               await attack(this.state, this.clients.getById(newAction.clientId), JSON.parse(newAction.payload), newAction.reqId)
               break;
             case "ITEM":
+              await item(this.state, this.clients.getById(newAction.clientId), JSON.parse(newAction.payload), newAction.reqId);
               break;
           }
           this.state.clientBufferedAction.delete(action.clientId);
