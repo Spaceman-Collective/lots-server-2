@@ -9,8 +9,8 @@ const type = Context.create();
  */
 export class EntitySchema extends Schema {
     @type("string") guid: string;
-    @type("uint32") x: number;
-    @type("uint32") y: number;
+    @type("int32") x: number;
+    @type("int32") y: number;
 
     constructor() {
         super();

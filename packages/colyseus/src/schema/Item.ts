@@ -5,7 +5,8 @@ import { SkillsSchema, StatsSchema, VitalsSchema } from "./Actor";
 const type = Context.create();
 
 export class ItemSchema extends Schema {
-    @type("string") guid: string;
+    @type("string") guid: string; //client will have item db locally and can look up items 
+
     @type("string") itemType: "WORN" | "BUFF" | "AMMO" | "CASTABLE";
     @type("number") stackSize: number;
 

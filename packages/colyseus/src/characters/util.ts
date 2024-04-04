@@ -26,6 +26,7 @@ function rollCharacter(roll: number) {
         // 0 - 49 is common
         //(1x)
         mult = 1;
+        rarity = CharacterRarity.COMMON;
     } else if (roll < 76) {
         // 76 - 90 is rare
         //(1.1 - 1.3x)

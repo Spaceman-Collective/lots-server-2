@@ -67,6 +67,8 @@ export async function item(state: BattleArenaRoomStateSchema, client: Client, ms
 
         switch (itemData.itemType) {
             case "WORN":
+                throw new Error("Can only equip items in Lobby")
+
                 // If it's WORN, equip/dequip, no reason to add to TickQ
                 const wornItem = plainToInstance(WornItemSchema, item.data);
                 // process dequip of the old item
@@ -293,25 +295,25 @@ function checkRequirements(requirements: SkillsSchema, currentSkills: SkillsSche
 }
 
 export function modifyVitals(vitals: VitalsSchema, modifications: VitalsSchema) {
-    vitals.health += modifications.health;
+    vitals.health += modifications.health + modifications.healthMax; //if boost max, then also add to base pool
     vitals.healthMax += modifications.healthMax;
     vitals.healthRecovery += modifications.healthRecovery;
 
-    vitals.shields += modifications.shields;
+    vitals.shields += modifications.shields + modifications.shieldsMax;
     vitals.shieldsMax += modifications.shieldsMax;
     vitals.shieldsRecovery += modifications.shieldsMax;
 
-    vitals.armor += modifications.armor;
+    vitals.armor += modifications.armor + modifications.armorMax;
     vitals.armorMax += modifications.armorMax;
     vitals.armorRecovery += modifications.armorRecovery;
 
-    vitals.barrier += modifications.barrier;
+    vitals.barrier += modifications.barrier + modifications.barrierMax;
     vitals.barrierMax += modifications.barrierMax;
     vitals.barrierRecovery += modifications.barrierRecovery;
 
-    vitals.stamina += modifications.stamina;
-    vitals.staminaMax += vitals.staminaMax;
-    vitals.staminaRecovery += vitals.staminaRecovery;
+    vitals.stamina += modifications.stamina + modifications.staminaMax;
+    vitals.staminaMax += modifications.staminaMax;
+    vitals.staminaRecovery += modifications.staminaRecovery;
 }
 
 export function inverseVitals(vitals: VitalsSchema): VitalsSchema {

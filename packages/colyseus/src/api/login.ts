@@ -48,6 +48,8 @@ export async function createAccount(req: Request, res: Response) {
 
         let commonChar = getRandomCharacter(0);
         commonChar.username = createAccountInfo.username;
+        commonChar.selected = true;
+
         await prisma.userCharacters.create({ data: commonChar })
 
         await prisma.userEquipment.create({
