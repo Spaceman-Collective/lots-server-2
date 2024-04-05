@@ -5,6 +5,7 @@ import { ActionArraySchema, ActionSchema } from "../Action";
 import { BattleMap } from "../BattleMap";
 import DefaultMap from '../../maps/default';
 import { PrismaClient } from '@prisma/client';
+import { InventorySchema } from "../Actor";
 const prisma = new PrismaClient();
 
 const type = Context.create();
@@ -19,7 +20,7 @@ export class BattleArenaRoomStateSchema extends Schema {
     @type({ map: UserSchema }) users = new MapSchema<UserSchema>();
     @type({ map: "string" }) usernameToClientId = new MapSchema<string>();
     @type("boolean") inLobby: boolean;
-    @type("string") winnerUsername: string;
+    @type("string") winnerUsername: string = "";
 
     // Actor Queue System
     // Client Current Action (clientId => action)
@@ -28,6 +29,9 @@ export class BattleArenaRoomStateSchema extends Schema {
 
     // Global Tick Q
     @type({ map: ActionArraySchema }) tickQ = new MapSchema<ActionArraySchema>();
+
+    // Winning LootBox
+    @type(InventorySchema) lootbox = new InventorySchema();
 
     constructor(
         ownerUserName: string,
@@ -73,7 +77,8 @@ export class BattleArenaRoomStateSchema extends Schema {
 
     async processCharacterDeath(username: string) {
         // Set character to dead
-        const targetUser = this.users.get(this.usernameToClientId.get(username)).actor.isAlive = false;
+        const targetActor = this.users.get(this.usernameToClientId.get(username)).actor
+        targetActor.isAlive = false;
         // Reduce character amount from user characters
         const selectedCharacter = await prisma.userCharacters.findFirst({
             where: {
@@ -89,12 +94,32 @@ export class BattleArenaRoomStateSchema extends Schema {
 
         // Dump character inventory in final loot box 
         // (each item has a 20% chance of ending up in the final lootbox)
+        const itemDropChance = 20;
+
+        for (let i = 0; i < targetActor.inventory.items.length; i++) {
+            const dropRoll = Math.floor(Math.random() * 101);
+            if (dropRoll < 20) {
+                this.lootbox.items.push(targetActor.inventory.items[i]);
+            }
+            targetActor.inventory.items.deleteAt(i);
+        }
 
         // Check if there's only one character left alive
+        let totalUsers = 0;
         let deadUsers = 0;
+        let winnerUsername = "";
         for (let user of this.users.entries()) {
             const actor = user[1].actor;
-
+            totalUsers++;
+            if (!actor.isAlive) {
+                deadUsers++;
+            } else {
+                winnerUsername = user[1].username;
+            }
+        }
+        if (totalUsers - deadUsers == 1) {
+            // TODO: GAME END! check this on update()
+            this.winnerUsername = winnerUsername;
         }
     }
 }

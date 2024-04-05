@@ -124,6 +124,18 @@ export class BattleArenaRoom extends Room<BattleArenaRoomStateSchema> {
     if (this.state.ticks % 600 == 0) {
       this.vitalsRecovery();
     }
+
+    // Check if the game is over
+    if (this.state.winnerUsername != "") {
+      this.processGameEnd();
+    }
+  }
+
+  async processGameEnd() {
+    // Send the winner a message 
+    this.broadcast("game:state:end", {
+      winner: this.state.winnerUsername
+    });
   }
 
   /**
