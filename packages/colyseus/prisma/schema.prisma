@@ -55,6 +55,7 @@ model UserEquipment {
 
 model ItemLibrary {
   id        String   @id
+  name      String
   type      ItemType
   img       String //2d Image File
   model     String //3d Model File

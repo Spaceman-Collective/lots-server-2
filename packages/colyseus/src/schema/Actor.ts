@@ -46,11 +46,11 @@ export class StatsSchema extends Schema {
     @type("number") speed: number; //number of attacks per 1s (10 ticks)
     @type("number") critChance: number; // roll a number out of 10k, if it's under this crit chance number, it's a crit
     @type("number") critMultiplier: number; //1.2 would be stored as 120 so we can do full ints (divide by 100 in the resolve)
-    @type("string") damageType: "PHYS" | "TECH" | "MAGIC"; //what health pool the damage applies to
+    @type("string") damageType: "NA" | "PHYS" | "TECH" | "MAGIC"; //what health pool the damage applies to
     //always attack with your mainhand weapon, offhand just gives boost to stats
-    @type("string") weaponType: "FIGHTING" | "RANGED" | "MAGIC" | "FIREARMS" | "TECH";
+    @type("string") weaponType: "NA" | "FIGHTING" | "RANGED" | "MAGIC" | "FIREARMS" | "TECH";
     @type("string") ammoTypeRequired: string; // what type of ammo is required for the weapon
-    @type("number") ammoInventoryIdx: number; //idx of the item used as ammo
+    @type("number") ammoInventoryIdx: number; //idx of the item used as ammo,
 }
 
 // Adds bonuses when using specific type of weapons

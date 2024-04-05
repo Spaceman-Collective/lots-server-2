@@ -37,6 +37,7 @@ interface CastServerPayload extends ItemServerPayload {
     vitalsModified: any | null,
     statsModified: any | null,
     skillsModified: any | null,
+    damageStats: any | null,
 }
 
 export async function item(state: BattleArenaRoomStateSchema, client: Client, msg: any, reqId: string) {
@@ -162,6 +163,7 @@ export async function item(state: BattleArenaRoomStateSchema, client: Client, ms
                                 statsModified: castableItem.castableStats.toJSON(),
                                 vitalsModified: castableItem.castableVitals.toJSON(),
                                 skillsModified: null,
+                                damageStats: castableItem.castableDamageStats.toJSON(),
                             })
                         })
                     )
@@ -248,6 +250,14 @@ export async function resolveItem(state: BattleArenaRoomStateSchema, action: Act
 
             if (castPayload.vitalsModified) {
                 modifyVitals(targetActor.vitals, plainToInstance(VitalsSchema, castPayload.vitalsModified))
+            }
+
+            if (castPayload.damageStats) {
+                // Attack with this weapon to the target actor
+
+
+
+
             }
         }
     } catch (e) {
@@ -369,10 +379,22 @@ export function modifyStats(stats: StatsSchema, modifications: StatsSchema) {
     stats.speed += modifications.speed;
     stats.critChance += modifications.critChance;
     stats.critMultiplier += modifications.critMultiplier;
-    stats.damageType += modifications.damageType;
-    stats.weaponType += modifications.weaponType;
-    stats.ammoTypeRequired += modifications.ammoTypeRequired;
-    stats.ammoInventoryIdx += modifications.ammoInventoryIdx;
+
+    if (modifications.damageType != "NA") {
+        stats.damageType += modifications.damageType;
+    }
+
+    if (modifications.damageType != "NA") {
+        stats.weaponType += modifications.weaponType;
+    }
+
+    if (modifications.damageType != "NA") {
+        stats.ammoTypeRequired += modifications.ammoTypeRequired;
+    }
+
+    if (modifications.ammoInventoryIdx != -2) {
+        stats.ammoInventoryIdx += modifications.ammoInventoryIdx;
+    }
 }
 
 export function inverseStats(stats: StatsSchema): StatsSchema {
@@ -385,10 +407,30 @@ export function inverseStats(stats: StatsSchema): StatsSchema {
     newStats.speed = stats.speed * -1;
     newStats.critChance = stats.critChance * -1;
     newStats.critMultiplier = stats.critMultiplier * -1;
-    newStats.damageType = "PHYS"; // all damage type inverse is PHYS as default
-    newStats.weaponType = "FIGHTING"; //default unarmed fighting
-    newStats.ammoTypeRequired = "";
-    newStats.ammoInventoryIdx = -1;
+
+    if (stats.damageType == "NA") {
+        newStats.damageType = "NA"; // all damage type inverse is PHYS as default        
+    } else {
+        newStats.damageType = "PHYS"
+    }
+
+    if (stats.weaponType == "NA") {
+        newStats.weaponType = "NA";
+    } else {
+        newStats.weaponType = "FIGHTING"; //default unarmed fighting
+    }
+
+    if (stats.ammoTypeRequired == "NA") {
+        newStats.ammoTypeRequired = "NA"
+    } else {
+        newStats.ammoTypeRequired = "";
+    }
+
+    if (stats.ammoInventoryIdx = -2) {
+        newStats.ammoInventoryIdx = -2;
+    } else {
+        newStats.ammoInventoryIdx = -1;
+    }
 
     return newStats;
 }

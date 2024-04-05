@@ -7,8 +7,9 @@ import { WebSocketTransport } from "@colyseus/ws-transport";
  */
 import { BattleArenaRoom } from "./rooms/BattleArenaRoom";
 import { createAccount, login } from "./api/login";
-import { getCharacters, selectCharacter } from "./api/selectCharacter";
+import { selectCharacter } from "./api/selectCharacter";
 import { TestRoom } from "./rooms/TestRoom";
+import { getUser } from "./api/fetchUser";
 
 export default config({
 
@@ -50,8 +51,9 @@ export default config({
         })
 
         app.post("/characters/get", async (req, res) => {
-            await getCharacters(req, res);
+            await getUser(req, res);
         })
+
 
         /**
          * Use @colyseus/playground

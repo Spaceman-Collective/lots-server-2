@@ -45,11 +45,17 @@ export class AmmoItemSchema extends ItemSchema {
 export class CastableItemSchema extends ItemSchema {
     @type("number") castableCastTime: number; //number of ticks for the animation to resovle before it takes effect
     @type("number") tileRange: number; // AoE if > 0
-    @type("number") castDuration: number;
+    @type("number") castDuration: number; //-1 for instant & permanent, 0 or greater to add inverse effect
 
+    // castableStats are for modifications (buff/debuff) to the target
     @ClassType(() => StatsSchema)
     @type(StatsSchema) castableStats: StatsSchema = new StatsSchema();
 
+    // castableVitals are for modifications (buff/debuff) to the target
     @ClassType(() => VitalsSchema)
     @type(VitalsSchema) castableVitals: VitalsSchema = new VitalsSchema();
+
+    // castableDamageStats are when treating this as a weapon and doing attacks with it
+    @ClassType(() => StatsSchema)
+    @type(StatsSchema) castableDamageStats: StatsSchema = new StatsSchema();
 }
