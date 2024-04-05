@@ -12,5 +12,5 @@ export class UserSchema extends Schema {
     @type("string") displayName: string;
 
     @ClassType(() => ActorSchema)
-    @type(ActorSchema) actor: ActorSchema;
+    @type(ActorSchema) actor: ActorSchema = new ActorSchema();
 }

@@ -157,15 +157,12 @@ export class BattleArenaRoom extends Room<BattleArenaRoomStateSchema> {
         const randomItem = await prisma.itemLibrary.findFirst({ skip: randomIndex });
 
         const userEquipment = await prisma.userEquipment.findUnique({ where: { username } });
-        const vault: {
-          [itemId: string]: number
-        } = JSON.parse(JSON.stringify(userEquipment.vault));
+        const vault = userEquipment.vault as {
+          itemId: string,
+          amount: number
+        }[];
 
-        if (vault[randomItem.id]) {
-          vault[randomItem.id] += randomItem.dropAmt
-        } else {
-          vault[randomItem.id] = randomItem.dropAmt
-        }
+        vault.push({ itemId: randomItem.id, amount: randomItem.dropAmt });
 
         await prisma.userEquipment.update({
           where: { username },

@@ -8,7 +8,7 @@ export class ItemSchema extends Schema {
     @type("string") guid: string; //client will have item db locally and can look up items 
 
     @type("string") itemType: "WORN" | "BUFF" | "AMMO" | "CASTABLE";
-    @type("number") stackSize: number;
+    @type("uint32") stackSize: number;
 
     @ClassType(() => SkillsSchema)
     @type(SkillsSchema) requirements: SkillsSchema = new SkillsSchema();
@@ -25,8 +25,8 @@ export class WornItemSchema extends ItemSchema {
 }
 
 export class BuffItemSchema extends ItemSchema {
-    @type("number") buffCastTime: number; //number of ticks for the animation to resovle before it takes effect
-    @type("number") tickDuration: number; // if -1, then permanent and doesn't require reverse
+    @type("uint32") buffCastTime: number; //number of ticks for the animation to resovle before it takes effect
+    @type("uint32") tickDuration: number; // if -1, then permanent and doesn't require reverse
 
     @ClassType(() => VitalsSchema)
     @type(VitalsSchema) buffVitalsModified: VitalsSchema = new VitalsSchema();
@@ -43,9 +43,9 @@ export class AmmoItemSchema extends ItemSchema {
 }
 
 export class CastableItemSchema extends ItemSchema {
-    @type("number") castableCastTime: number; //number of ticks for the animation to resovle before it takes effect
-    @type("number") tileRange: number; // AoE if > 0
-    @type("number") castDuration: number; //-1 for instant & permanent, 0 or greater to add inverse effect
+    @type("uint32") castableCastTime: number; //number of ticks for the animation to resovle before it takes effect
+    @type("uint32") tileRange: number; // AoE if > 0
+    @type("uint32") castDuration: number; //-1 for instant & permanent, 0 or greater to add inverse effect
 
     // castableStats are for modifications (buff/debuff) to the target
     @ClassType(() => StatsSchema)

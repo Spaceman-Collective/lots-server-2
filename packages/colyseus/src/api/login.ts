@@ -5,12 +5,11 @@
 
 import { Request, Response } from "express";
 import { z } from "zod";
-import { CharacterRarity, PrismaClient } from '@prisma/client';
+import { PrismaClient } from '@prisma/client';
 const prisma = new PrismaClient();
 import { randomBytes } from 'crypto';
 import { scryptSync } from 'crypto';
 import { SignJWT } from "jose";
-import { character as DEFAULT_CHARACTER } from "../characters/default";
 import { getRandomCharacter } from "../characters/util";
 
 const AccountMsg = z.object({
@@ -64,7 +63,7 @@ export async function createAccount(req: Request, res: Response) {
                     mainhand: "",
                     offhand: "",
                 },
-                vault: JSON.stringify([])
+                vault: []
             }
         })
 

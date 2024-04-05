@@ -1,11 +1,13 @@
 import { CharacterRarity, UserCharacters } from "@prisma/client";
 import { nanoid } from "nanoid";
-
+import { uniqueNamesGenerator, names } from "unique-names-generator";
 
 export function getRandomCharacter(roll: number): UserCharacters {
     const randomChar = rollCharacter(roll);
     return {
         id: nanoid(),
+        name: uniqueNamesGenerator({ dictionaries: [names] }),
+
         username: "",
         selected: false,
 

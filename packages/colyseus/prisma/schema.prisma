@@ -20,11 +20,12 @@ model User {
   userSalt      String
   passwordHash  String
   walletPubkey  String @default("")
-  clientId      String @default("")
+  clientId      String @default("not_logged_in")
 }
 
 model UserCharacters {
   id       String  @id @default(uuid())
+  name     String
   username String
   selected Boolean
 
@@ -50,7 +51,7 @@ model UserEquipment {
   username  String @id
   inventory Json
   worn      Json
-  vault     Json // {[itemId:string] : number}
+  vault     Json // []
 }
 
 model ItemLibrary {
