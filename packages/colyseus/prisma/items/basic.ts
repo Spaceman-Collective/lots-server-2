@@ -188,16 +188,16 @@ const castableItems: ItemLibrary[] = [{
             armorRecovery: 0,
         },
         castableDamageStats: {
-            damageMin: 0,
-            damageMax: 0,
+            damageMin: 50,
+            damageMax: 500,
             accuracy: 0,
             dodge: 0,
             range: 0,
             speed: 0,
-            critChance: 0,
-            critMultiplier: 0,
-            damageType: "NA",
-            weaponType: "NA",
+            critChance: 1000,
+            critMultiplier: 2,
+            damageType: "PHYS",
+            weaponType: "FIREARMS",
             ammoTypeRequired: "NA",
             ammoInventoryIdx: -2
         }
@@ -207,5 +207,14 @@ const castableItems: ItemLibrary[] = [{
 
 main();
 async function main() {
-    // Upload to the Database
+    try {
+        // Upload to the Database
+        await prisma.itemLibrary.createMany({
+            //@ts-ignore
+            data: [...wornItems, ...buffItems, ...ammoItems, ...castableItems]
+        })
+        console.log("Uploaded a items to the database!");
+    } catch (e) {
+        console.error(e);
+    }
 }
