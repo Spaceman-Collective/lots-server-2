@@ -89,5 +89,12 @@ export class BattleArenaRoomStateSchema extends Schema {
 
         // Dump character inventory in final loot box 
         // (each item has a 20% chance of ending up in the final lootbox)
+
+        // Check if there's only one character left alive
+        let deadUsers = 0;
+        for (let user of this.users.entries()) {
+            const actor = user[1].actor;
+
+        }
     }
 }
