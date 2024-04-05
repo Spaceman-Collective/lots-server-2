@@ -19,6 +19,7 @@ export class BattleArenaRoomStateSchema extends Schema {
     @type({ map: UserSchema }) users = new MapSchema<UserSchema>();
     @type({ map: "string" }) usernameToClientId = new MapSchema<string>();
     @type("boolean") inLobby: boolean;
+    @type("string") winnerUsername: string;
 
     // Actor Queue System
     // Client Current Action (clientId => action)
