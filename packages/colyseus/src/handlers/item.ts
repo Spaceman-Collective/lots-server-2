@@ -4,8 +4,9 @@ import { z } from 'zod';
 import { plainToInstance } from "class-transformer";
 import { PrismaClient } from "@prisma/client";
 import { AmmoItemSchema, BuffItemSchema, CastableItemSchema, ItemSchema, WornItemSchema } from "../schema/Item";
-import { ActorSchema, SkillsSchema, StatsSchema, VitalsSchema } from "../schema/Actor";
+import { ActorSchema, InventorySchema, SkillsSchema, StatsSchema, VitalsSchema } from "../schema/Actor";
 import { ActionSchema } from "../schema/Action";
+import { processAttack } from "./attack";
 const prisma = new PrismaClient();
 
 /**
@@ -38,6 +39,7 @@ interface CastServerPayload extends ItemServerPayload {
     statsModified: any | null,
     skillsModified: any | null,
     damageStats: any | null,
+    casterSkills: any | null,
 }
 
 export async function item(state: BattleArenaRoomStateSchema, client: Client, msg: any, reqId: string) {
@@ -164,6 +166,7 @@ export async function item(state: BattleArenaRoomStateSchema, client: Client, ms
                                 vitalsModified: castableItem.castableVitals.toJSON(),
                                 skillsModified: null,
                                 damageStats: castableItem.castableDamageStats.toJSON(),
+                                casterSkills: actor.skills.toJSON()
                             })
                         })
                     )
@@ -185,6 +188,8 @@ export async function item(state: BattleArenaRoomStateSchema, client: Client, ms
                                     statsModified: (inverseStats(castableItem.castableStats)).toJSON(),
                                     vitalsModified: (inverseVitals(castableItem.castableVitals)).toJSON(),
                                     skillsModified: null,
+                                    damageStats: null, //not needed to reverse if its damage
+                                    casterSkills: null, //only needed on damage and not needed on reverse
                                 })
                             })
                         )
@@ -254,7 +259,18 @@ export async function resolveItem(state: BattleArenaRoomStateSchema, action: Act
 
             if (castPayload.damageStats) {
                 // Attack with this weapon to the target actor
-
+                await processAttack(
+                    {
+                        stats: plainToInstance(StatsSchema, castPayload.damageStats),
+                        inventory: new InventorySchema(),
+                        skills: plainToInstance(SkillsSchema, castPayload.casterSkills),
+                    },
+                    {
+                        skills: targetActor.skills,
+                        vitals: targetActor.vitals,
+                        stats: targetActor.stats
+                    }
+                )
 
 
 
