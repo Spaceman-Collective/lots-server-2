@@ -26,7 +26,7 @@ export class WornItemSchema extends ItemSchema {
 
 export class BuffItemSchema extends ItemSchema {
     @type("uint32") buffCastTime: number; //number of ticks for the animation to resovle before it takes effect
-    @type("uint32") tickDuration: number; // if -1, then permanent and doesn't require reverse
+    @type("int32") tickDuration: number; // if -1, then permanent and doesn't require reverse
 
     @ClassType(() => VitalsSchema)
     @type(VitalsSchema) buffVitalsModified: VitalsSchema = new VitalsSchema();
@@ -44,8 +44,8 @@ export class AmmoItemSchema extends ItemSchema {
 
 export class CastableItemSchema extends ItemSchema {
     @type("uint32") castableCastTime: number; //number of ticks for the animation to resovle before it takes effect
-    @type("uint32") tileRange: number; // AoE if > 0
-    @type("uint32") castDuration: number; //-1 for instant & permanent, 0 or greater to add inverse effect
+    @type("int32") tileRange: number; // AoE if > 0
+    @type("int32") castDuration: number; //-1 for instant & permanent, 0 or greater to add inverse effect
 
     // castableStats are for modifications (buff/debuff) to the target
     @ClassType(() => StatsSchema)
