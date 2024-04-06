@@ -50,7 +50,7 @@ export class StatsSchema extends Schema {
     //always attack with your mainhand weapon, offhand just gives boost to stats
     @type("string") weaponType: "NA" | "FIGHTING" | "RANGED" | "MAGIC" | "FIREARMS" | "TECH";
     @type("string") ammoTypeRequired: string; // what type of ammo is required for the weapon
-    @type("uint32") ammoInventoryIdx: number; //idx of the item used as ammo,
+    @type("int32") ammoInventoryIdx: number; //idx of the item used as ammo,
 }
 
 // Adds bonuses when using specific type of weapons
