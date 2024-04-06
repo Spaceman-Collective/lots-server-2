@@ -1,6 +1,6 @@
 import { Schema, Context } from "@colyseus/schema";
 import { Type as ClassType } from "class-transformer";
-import { SkillsSchema, StatsSchema, VitalsSchema } from "./Actor";
+import { SkillsSchema, StatsSchema, VitalsSchema } from "./ActorInfo";
 
 const type = Context.create();
 
