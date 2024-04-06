@@ -10,6 +10,7 @@ import { createAccount, login } from "./api/login";
 import { selectCharacter } from "./api/selectCharacter";
 import { TestRoom } from "./rooms/TestRoom";
 import { getUser } from "./api/fetchUser";
+import { inventory } from "./api/inventory";
 
 export default config({
 
@@ -54,6 +55,9 @@ export default config({
             await getUser(req, res);
         })
 
+        app.post("/characters/inventory", async (req, res) => {
+            await inventory(req, res);
+        })
 
         /**
          * Use @colyseus/playground

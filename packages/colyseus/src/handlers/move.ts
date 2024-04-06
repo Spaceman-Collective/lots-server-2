@@ -15,7 +15,6 @@ const MoveMsg = z.object({
 export async function move(state: BattleArenaRoomStateSchema, client: Client, msg: any, reqId: string) {
     try {
         const { targetTile } = MoveMsg.parse(msg);
-        console.log(`Target Tile: ${targetTile.x}, ${targetTile.y}`)
         /* TODO: Map logic implementation later for obstructions
         // Check if Tile Is movable
         if (state.bmap.getXY(targetTile.x, targetTile.y).movingSpeed < 0) {
@@ -50,12 +49,11 @@ export async function resolveMove(state: BattleArenaRoomStateSchema, action: Act
         );
         if (distance > 1.9) {
             //diagonal is 1.4
-            throw new Error(`${action.reqId}:Next tile is more than 1 square away.`);
+            throw new Error(`${action.reqId}:MOVE:Next tile is more than 1 square away.`);
         }
 
         state.users.get(action.clientId).actor.x = targetTile.x;
         state.users.get(action.clientId).actor.y = targetTile.y;
-        console.log(`Updated to ${targetTile.x},${targetTile.y}`)
     } catch (e: any) {
         throw e;
     }

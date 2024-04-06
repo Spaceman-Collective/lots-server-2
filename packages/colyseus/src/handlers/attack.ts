@@ -16,7 +16,7 @@ export async function attack(state: BattleArenaRoomStateSchema, client: Client, 
         const user = state.users.get(client.id);
         const targetUser = state.users.get(state.usernameToClientId.get(targetUsername));
         if (!targetUser) {
-            throw new Error("Target user doesn't exist!")
+            throw new Error(`Target user doesn't exist!`)
         }
 
         // Check if target player is ALIVE
@@ -30,7 +30,7 @@ export async function attack(state: BattleArenaRoomStateSchema, client: Client, 
             Math.pow(user.actor.y - targetUser.actor.y, 2)
         );
         if (distance > user.actor.stats.range) {
-            throw new Error("Target out of range!");
+            throw new Error(`Target out of range!`);
         }
 
         // Create new tickQ action based on user's weapon's speed
@@ -44,7 +44,7 @@ export async function attack(state: BattleArenaRoomStateSchema, client: Client, 
             tickEndsAt: attackTick.toString()
         }))
     } catch (e: any) {
-        throw e;
+        throw new Error(`${reqId}:ATTACK:${e.message}`);
     }
 }
 
@@ -56,7 +56,7 @@ export async function resolveAttack(state: BattleArenaRoomStateSchema, action: A
         const user = state.users.get(action.clientId);
         const targetUser = state.users.get(state.usernameToClientId.get(targetUsername));
         if (!targetUser) {
-            throw new Error("Target user doesn't exist!")
+            throw new Error(`Target user doesn't exist!`)
         }
 
         const atk = await processAttack(
@@ -68,9 +68,9 @@ export async function resolveAttack(state: BattleArenaRoomStateSchema, action: A
             {
                 skills: targetUser.actor.skills,
                 stats: targetUser.actor.stats,
-                vitals: user.actor.vitals,
+                vitals: targetUser.actor.vitals,
             })
-
+        console.log("ATK: ", atk);
         if (atk.died) {
             await state.processCharacterDeath(targetUser.username);
         }
@@ -196,7 +196,7 @@ export async function resolveAttack(state: BattleArenaRoomStateSchema, action: A
         }
         */
     } catch (e: any) {
-        throw e;
+        throw new Error(`${action.reqId}:ATTACK:${e.message}`);
     }
 }
 

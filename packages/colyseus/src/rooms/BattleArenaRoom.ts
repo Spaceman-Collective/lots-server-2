@@ -242,52 +242,56 @@ export class BattleArenaRoom extends Room<BattleArenaRoomStateSchema> {
   }
 
   async processActionQ(tick: string, actions: ArraySchema<ActionSchema>) {
-    for (let action of actions.toArray()) {
-      try {
+    try {
+      for (let action of actions.toArray()) {
         try {
-          switch (action.actionType) {
-            case "MOVE":
-              await resolveMove(this.state, action);
-              break;
-            case "ATTACK":
-              await resolveAttack(this.state, action);
-              await this.airdrop(this.state.users.get(action.clientId).username);
-              break;
-            case "ITEM":
-              await resolveItem(this.state, action);
-              break;
-          }
-
-        } catch (e: any) {
-          this.state.clientCurrentAction.delete(action.clientId);
-          throw e;
-        }
-        this.state.clientCurrentAction.delete(action.clientId);
-        if (this.state.clientBufferedAction.has(action.clientId)) {
-          // if there's an action q'd up, add it to current action and process it
-          const newAction = this.state.clientBufferedAction.get(action.clientId);
           try {
-            switch (newAction.actionType) {
+            switch (action.actionType) {
               case "MOVE":
-                await move(this.state, this.clients.getById(newAction.clientId), JSON.parse(newAction.payload), newAction.reqId);
+                await resolveMove(this.state, action);
                 break;
               case "ATTACK":
-                await attack(this.state, this.clients.getById(newAction.clientId), JSON.parse(newAction.payload), newAction.reqId)
+                await resolveAttack(this.state, action);
+                await this.airdrop(this.state.users.get(action.clientId).username);
                 break;
               case "ITEM":
-                await item(this.state, this.clients.getById(newAction.clientId), JSON.parse(newAction.payload), newAction.reqId);
+                await resolveItem(this.state, action);
                 break;
             }
+
           } catch (e: any) {
-            this.state.clientBufferedAction.delete(action.clientId);
+            this.state.clientCurrentAction.delete(action.clientId);
             throw e;
           }
-          this.state.clientBufferedAction.delete(action.clientId);
+          this.state.clientCurrentAction.delete(action.clientId);
+          if (this.state.clientBufferedAction.has(action.clientId)) {
+            // if there's an action q'd up, add it to current action and process it
+            const newAction = this.state.clientBufferedAction.get(action.clientId);
+            try {
+              switch (newAction.actionType) {
+                case "MOVE":
+                  await move(this.state, this.clients.getById(newAction.clientId), JSON.parse(newAction.payload), newAction.reqId);
+                  break;
+                case "ATTACK":
+                  await attack(this.state, this.clients.getById(newAction.clientId), JSON.parse(newAction.payload), newAction.reqId)
+                  break;
+                case "ITEM":
+                  await item(this.state, this.clients.getById(newAction.clientId), JSON.parse(newAction.payload), newAction.reqId);
+                  break;
+              }
+            } catch (e: any) {
+              this.state.clientBufferedAction.delete(action.clientId);
+              throw e;
+            }
+            this.state.clientBufferedAction.delete(action.clientId);
+          }
+        } catch (e: any) {
+          this.clients.getById(action.clientId).send("error", JSON.stringify({ error: e.message }));
         }
-      } catch (e: any) {
-        this.clients.getById(action.clientId).send("error", JSON.stringify({ error: e.message }));
+        this.state.tickQ.delete(tick);
       }
-      this.state.tickQ.delete(tick);
+    } catch (e: any) {
+      console.log("ERROR: ", e.message);
     }
   }
 

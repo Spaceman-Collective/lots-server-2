@@ -123,7 +123,7 @@ export const CommonVitals = {
 export const CommonStats = {
     damageMin: 10,
     damageMax: 15,
-    accuracy: 1000, //10% accuracy
+    accuracy: 10000, //25% accuracy //TODO: set back to 25%
     dodge: 10,
     range: 1,
     speed: 1,
