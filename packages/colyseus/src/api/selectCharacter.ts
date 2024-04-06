@@ -2,6 +2,10 @@ import { Request, Response } from "express";
 import { z } from "zod";
 import { PrismaClient } from '@prisma/client';
 import { jwtVerify } from "jose";
+import { plainToInstance } from "class-transformer";
+import { WornItemSchema } from "../schema/Item";
+import { checkRequirements } from "../handlers/item";
+import { SkillsSchema } from "../schema/Actor";
 const prisma = new PrismaClient();
 
 
@@ -43,6 +47,30 @@ export async function selectCharacter(req: Request, res: Response) {
         })
         if (!character) {
             throw new Error("Character not found in User Inventory!")
+        }
+
+        const userEquipment = await prisma.userEquipment.findUnique({ where: { username } });
+        // TODO don't allow selection if any of the equipped items requirements are not met
+        const items = await prisma.itemLibrary.findMany({
+            where: {
+                id: {
+                    in: [
+                        (userEquipment.worn as any).head ? (userEquipment.worn as any).head : undefined,
+                        (userEquipment.worn as any).torso ? (userEquipment.worn as any).torso : undefined,
+                        (userEquipment.worn as any).legs ? (userEquipment.worn as any).legs : undefined,
+                        (userEquipment.worn as any).boots ? (userEquipment.worn as any).boots : undefined,
+                        (userEquipment.worn as any).mainhand ? (userEquipment.worn as any).mainhand : undefined,
+                        (userEquipment.worn as any).offhand ? (userEquipment.worn as any).offhand : undefined
+                    ].filter((x) => x != undefined)
+                }
+            }
+        })
+
+        for (let item of items) {
+            const wornItem = plainToInstance(WornItemSchema, item.data);
+            if (!checkRequirements(wornItem.requirements, plainToInstance(SkillsSchema, character.skills))) {
+                throw new Error(`New selection doesn't have requirements to wear current loadout. Offending item: ${wornItem.wornArea}`)
+            }
         }
 
         const previouslySelectedCharacter = await prisma.userCharacters.findFirst({

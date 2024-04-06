@@ -29,7 +29,8 @@ export async function attack(state: BattleArenaRoomStateSchema, client: Client, 
             Math.pow(user.actor.x - targetUser.actor.x, 2) +
             Math.pow(user.actor.y - targetUser.actor.y, 2)
         );
-        if (distance > user.actor.stats.range) {
+        //added 0.4 for diagonal attacks
+        if (distance > user.actor.stats.range + 0.4) {
             throw new Error(`Target out of range!`);
         }
 

@@ -306,7 +306,7 @@ export function processDequip(actor: ActorSchema, item: WornItemSchema) {
     }
 }
 
-function checkRequirements(requirements: SkillsSchema, currentSkills: SkillsSchema): boolean {
+export function checkRequirements(requirements: SkillsSchema, currentSkills: SkillsSchema): boolean {
     if (
         currentSkills.fighting < requirements.fighting ||
         currentSkills.ranged < requirements.ranged ||

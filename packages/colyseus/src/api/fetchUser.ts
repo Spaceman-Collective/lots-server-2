@@ -2,6 +2,8 @@ import { Request, Response } from "express";
 import { z } from "zod";
 import { PrismaClient } from '@prisma/client';
 import { jwtVerify } from "jose";
+import { plainToInstance } from "class-transformer";
+import { ActorSchema } from "../schema/Actor";
 const prisma = new PrismaClient();
 
 
@@ -26,7 +28,21 @@ export async function getUser(req: Request, res: Response) {
             where: { username }
         })
 
-        res.status(200).json({ success: true, characters, equipment });
+        const selectedCharacter = characters.find(x => x.selected == true);
+        let selectedActor;
+        if (selectedCharacter) {
+            selectedActor = plainToInstance(ActorSchema, {
+                vitasl: selectedCharacter.vitals,
+                stats: selectedCharacter.stats,
+                skills: selectedCharacter.skills,
+                inventory: equipment.inventory,
+                worn: equipment.worn,
+                isAlive: true,
+            })
+            await selectedActor.processEquipment()
+        }
+
+        res.status(200).json({ success: true, characters, equipment, selectedActor: selectedActor.toJSON() });
     } catch (e: any) {
         res.status(500).json({ success: false, error: e.message });
     }

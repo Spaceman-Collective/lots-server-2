@@ -1,9 +1,11 @@
 import { Request, Response } from "express";
-import { z } from "zod";
+import { isAborted, z } from "zod";
 import { PrismaClient } from '@prisma/client';
 import { jwtVerify } from "jose";
-import { ItemSchema } from "../schema/Item";
+import { ItemSchema, WornItemSchema } from "../schema/Item";
 import { plainToInstance } from "class-transformer";
+import { checkRequirements, processEquip } from "../handlers/item";
+import { ActorSchema, SkillsSchema } from "../schema/Actor";
 const prisma = new PrismaClient();
 
 const InventoryMsg = z.object({
@@ -26,10 +28,16 @@ export async function inventory(req: Request, res: Response) {
             new TextEncoder().encode(process.env.SERVER_JWT_KEY)
         );
         const username = payload.username as string;
+        const selectedCharacter = await prisma.userCharacters.findFirst({
+            where: { username, selected: true }
+        });
+
+        if (!selectedCharacter) { throw new Error("Please select a character first!") }
+
 
         const userEquipment = await prisma.userEquipment.findUniqueOrThrow({ where: { username } });
         let worn = userEquipment.worn as any as Worn;
-        let backpack = userEquipment.inventory as any as HeldItem[];
+        let backpack = (userEquipment.inventory as any)['items'] as HeldItem[];
         let vault = userEquipment.vault as any as HeldItem[];
 
         const EmptyItem: HeldItem = {
@@ -80,17 +88,33 @@ export async function inventory(req: Request, res: Response) {
 
             // set to item
             if (msg.to == "VAULT") {
-                vault[msg.toIdx] = toItemAmt;
+                vault[msg.toIdx] = fromItemAmt;
             } else if (msg.to == "BACKPACK") {
-                backpack[msg.toIdx] = toItemAmt;
+                backpack[msg.toIdx] = fromItemAmt;
             } else if (msg.to == "WORN") {
-                worn[msg.toSlot] = toItemAmt.itemId
+                const item = await prisma.itemLibrary.findUniqueOrThrow({ where: { id: fromItemAmt.itemId } })
+                const bareItem = plainToInstance(ItemSchema, item.data);
+                // check requirements, check slot, check its a worn item
+                if (bareItem.itemType != "WORN") {
+                    throw new Error("This item cannot be worn!")
+                }
+
+                if (!checkRequirements(bareItem.requirements, plainToInstance(SkillsSchema, selectedCharacter.skills))) {
+                    throw new Error("Selected character cannot equip this item!");
+                }
+
+                const wornItem = plainToInstance(WornItemSchema, item.data);
+                if (msg.toSlot != wornItem.wornArea) {
+                    throw new Error(`This item is meant to be worn in the ${wornItem.wornArea} slot.`)
+                }
+                worn[msg.toSlot] = fromItemAmt.itemId;
+                //process equip will be done for all items at the end when we send new selected character back
             }
 
         } else {
             //spot being moved to is not empty
             //check if same item, then stack code
-            if (fromItemAmt.itemId == toItemAmt.itemId) {
+            if (fromItemAmt.itemId == toItemAmt.itemId && msg.to != "WORN") {
                 // only time we have to actually fetch the item to figure out it's stackSize
                 const item = await prisma.itemLibrary.findUniqueOrThrow({ where: { id: fromItemAmt.itemId } });
                 const itemData = plainToInstance(ItemSchema, item.data);
@@ -121,42 +145,81 @@ export async function inventory(req: Request, res: Response) {
                     }
                 }
 
-
             } else {
-                //if different item, then swap
+                if (msg.from == "WORN" && msg.to == "WORN" && fromItemAmt.itemId == toItemAmt.itemId) {
+                    //same item being moved to the same slot in worn
+                    //do nothing
+                } else {
+                    //if different item, then swap
 
-                //set to item to fromItem
-                if (msg.to == "VAULT") {
-                    vault[msg.toIdx] = fromItemAmt
-                } else if (msg.to == "BACKPACK") {
-                    backpack[msg.toIdx] = fromItemAmt;
-                } else if (msg.to == "WORN") {
-                    worn[msg.toSlot] = fromItemAmt.itemId;
-                }
+                    //set to item to fromItem
+                    if (msg.to == "VAULT") {
+                        vault[msg.toIdx] = fromItemAmt
+                    } else if (msg.to == "BACKPACK") {
+                        backpack[msg.toIdx] = fromItemAmt;
+                    } else if (msg.to == "WORN") {
+                        // check requirements, check slot, check its a worn item
+                        const item = await prisma.itemLibrary.findUniqueOrThrow({ where: { id: fromItemAmt.itemId } })
+                        const bareItem = plainToInstance(ItemSchema, item.data);
+                        // check requirements, check slot, check its a worn item
+                        if (bareItem.itemType != "WORN") {
+                            throw new Error("This item cannot be worn!")
+                        }
 
-                //set from item to toItem
-                if (msg.from == "VAULT") {
-                    vault[msg.fromIdx] = toItemAmt
-                } else if (msg.from == "BACKPACK") {
-                    backpack[msg.fromIdx] = toItemAmt;
-                } else if (msg.from == "WORN") {
-                    worn[msg.fromSlot] = toItemAmt.itemId;
+                        if (!checkRequirements(bareItem.requirements, plainToInstance(SkillsSchema, selectedCharacter.skills))) {
+                            throw new Error("Selected character cannot equip this item!");
+                        }
+
+                        const wornItem = plainToInstance(WornItemSchema, item.data);
+                        if (msg.toSlot != wornItem.wornArea) {
+                            throw new Error(`This item is meant to be worn in the ${wornItem.wornArea} slot.`)
+                        }
+
+                        worn[msg.toSlot] = fromItemAmt.itemId;
+                    }
+
+                    //set from item to toItem
+                    if (msg.from == "VAULT") {
+                        vault[msg.fromIdx] = toItemAmt
+                    } else if (msg.from == "BACKPACK") {
+                        backpack[msg.fromIdx] = toItemAmt;
+                    } else if (msg.from == "WORN") {
+                        //process dequip doesn't matter, cause we'll process a fresh equip of all equipped items
+                        worn[msg.fromSlot] = toItemAmt.itemId;
+                    }
+
                 }
             }
         }
+
+        // TODO fill empty slots with empty items
+        backpack = backpack.filter((x) => x != undefined);
+        vault = vault.filter((x) => x != undefined);
 
         //update user equipment
         const newUserEquipment = await prisma.userEquipment.update({
             where: { username },
             data: {
                 worn: worn as any,
-                inventory: backpack as any,
+                inventory: { items: backpack as any },
                 vault: vault as any
             }
         })
 
-        res.status(200).json({ success: true, newUserEquipment });
+        const selectedActor = plainToInstance(ActorSchema, {
+            vitals: selectedCharacter.vitals,
+            stats: selectedCharacter.stats,
+            skills: selectedCharacter.skills,
+            inventory: { items: backpack as any },
+            worn: worn,
+            isAlive: true
+        })
+
+        await selectedActor.processEquipment()
+
+        res.status(200).json({ success: true, inventory: newUserEquipment, selectedActor: selectedActor.toJSON() });
     } catch (e: any) {
+        console.log(e.message);
         res.status(500).json({ success: false, error: e.message });
     }
 }

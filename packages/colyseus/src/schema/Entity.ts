@@ -12,10 +12,12 @@ export class EntitySchema extends Schema {
     @type("int32") x: number;
     @type("int32") y: number;
 
-    constructor() {
+    constructor(spawn?: { x: number, y: number }) {
         super();
         this.guid = nanoid();
-        this.x = 0;
-        this.y = 0;
+        if (spawn) {
+            this.x = spawn.x;
+            this.y = spawn.y;
+        }
     }
 }

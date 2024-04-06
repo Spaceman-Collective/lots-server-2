@@ -1,6 +1,10 @@
 import { Schema, ArraySchema, Context } from "@colyseus/schema";
 import { EntitySchema } from "./Entity";
-import { Type as ClassType } from "class-transformer";
+import { Type as ClassType, plainToClass, plainToInstance } from "class-transformer";
+import { PrismaClient } from "@prisma/client";
+import { WornItemSchema } from "./Item";
+import { modifyStats, modifyVitals } from "../handlers/item";
+const prisma = new PrismaClient();
 
 const type = Context.create();
 
@@ -104,4 +108,31 @@ export class ActorSchema extends EntitySchema {
     @type(WornSchema) worn: WornSchema = new WornSchema();
 
     @type("boolean") isAlive: boolean = true;
+
+
+    /**
+     * RUN ONLY ONCE!
+     */
+    async processEquipment() {
+        const items = await prisma.itemLibrary.findMany({
+            where: {
+                id: {
+                    in: [
+                        this.worn.head ? this.worn.head : undefined,
+                        this.worn.torso ? this.worn.torso : undefined,
+                        this.worn.legs ? this.worn.legs : undefined,
+                        this.worn.boots ? this.worn.boots : undefined,
+                        this.worn.mainhand ? this.worn.mainhand : undefined,
+                        this.worn.offhand ? this.worn.offhand : undefined
+                    ].filter((x) => x != undefined)
+                }
+            }
+        })
+
+        for (let item of items) {
+            const wornItem = plainToInstance(WornItemSchema, item.data);
+            modifyVitals(this.vitals, wornItem.wornVitalsModified);
+            modifyStats(this.stats, wornItem.wornStatsModified);
+        }
+    }
 }

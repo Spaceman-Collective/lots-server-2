@@ -63,7 +63,24 @@ export async function createAccount(req: Request, res: Response) {
                     mainhand: "",
                     offhand: "",
                 },
-                vault: []
+                vault: [
+                    {
+                        itemId: "armor_black",
+                        amount: 1
+                    },
+                    {
+                        itemId: "health_potion",
+                        amount: 3
+                    },
+                    {
+                        itemId: "arrow",
+                        amount: 25
+                    },
+                    {
+                        itemId: "hex_bag",
+                        amount: 2
+                    }
+                ]
             }
         })
 

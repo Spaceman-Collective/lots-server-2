@@ -346,6 +346,8 @@ export class BattleArenaRoom extends Room<BattleArenaRoomStateSchema> {
         username: user.username,
         displayName: user.displayName,
         actor: {
+          x: Math.floor(Math.random() * 26),
+          y: Math.floor(Math.random() * 26),
           vitals: actor.vitals,
           stats: actor.stats,
           skills: actor.skills,
@@ -355,6 +357,8 @@ export class BattleArenaRoom extends Room<BattleArenaRoomStateSchema> {
         }
       }));
 
+      // applies equipment stats to actor
+      await this.state.users.get(client.sessionId).actor.processEquipment();
 
       // Reverse look up
       this.state.usernameToClientId.set(user.username, client.id);
