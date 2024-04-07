@@ -26,7 +26,7 @@ export class BattleArenaRoomStateSchema extends Schema {
     // Actor Queue System
     // Client Current Action (clientId => action)
     @type({ map: ActionSchema }) clientCurrentAction = new MapSchema<ActionSchema>();
-    @type({ map: "string" }) clientBufferedAction = new MapSchema<String>();
+    @type({ map: "string" }) clientBufferedAction = new MapSchema<string>();
 
     // Global Tick Q
     @type({ map: ActionArraySchema }) tickQ = new MapSchema<ActionArraySchema>();

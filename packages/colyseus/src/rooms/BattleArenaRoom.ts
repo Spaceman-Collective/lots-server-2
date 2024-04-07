@@ -75,7 +75,8 @@ export class BattleArenaRoom extends Room<BattleArenaRoomStateSchema> {
 
           const msg = CharacterActionMsg.parse(message);
           if (this.state.clientCurrentAction.get(client.id)) {
-            this.state.clientBufferedAction.set(client.id, message);
+            console.log("Setting buffered action");
+            this.state.clientBufferedAction.set(client.id, JSON.stringify(message));
           } else {
             switch (msg.type) {
               case "MOVE":
@@ -265,7 +266,7 @@ export class BattleArenaRoom extends Room<BattleArenaRoomStateSchema> {
           this.state.clientCurrentAction.delete(action.clientId);
           if (this.state.clientBufferedAction.has(action.clientId)) {
             // if there's an action q'd up, add it to current action and process it
-            const msg = CharacterActionMsg.parse(this.state.clientBufferedAction.get(action.clientId));
+            const msg = CharacterActionMsg.parse(JSON.parse(this.state.clientBufferedAction.get(action.clientId)));
             try {
               switch (msg.type) {
                 case "MOVE":
