@@ -1,5 +1,5 @@
 import { Room, Client } from "@colyseus/core";
-import { BattleArenaRoomStateSchema } from "../schema/rooms/BattleArenaRoom";
+import { AddToTickQAction, BattleArenaRoomStateSchema } from "../schema/rooms/BattleArenaRoom";
 import { z } from 'zod';
 import { PrismaClient } from '@prisma/client';
 import { jwtVerify } from "jose";
@@ -24,6 +24,12 @@ const CreateRoomMsg = z.object({
 const JoinRoomMsg = z.object({
   jwt: z.string(),
   password: z.string().optional(),
+});
+
+const CharacterActionMsg = z.object({
+  reqId: z.string(),
+  type: z.enum(["MOVE", "ATTACK", "ITEM"]),
+  payload: z.any()
 });
 
 export class BattleArenaRoom extends Room<BattleArenaRoomStateSchema> {
@@ -61,12 +67,6 @@ export class BattleArenaRoom extends Room<BattleArenaRoomStateSchema> {
         }
       });
 
-      const CharacterActionMsg = z.object({
-        reqId: z.string(),
-        type: z.enum(["MOVE", "ATTACK", "ITEM"]),
-        payload: z.any()
-      });
-
       this.onMessage("character:action", async (client, message) => {
         try {
           if (this.state.inLobby) {
@@ -75,7 +75,7 @@ export class BattleArenaRoom extends Room<BattleArenaRoomStateSchema> {
 
           const msg = CharacterActionMsg.parse(message);
           if (this.state.clientCurrentAction.get(client.id)) {
-            this.state.clientBufferedAction.set(client.id, new ActionSchema());
+            this.state.clientBufferedAction.set(client.id, message);
           } else {
             switch (msg.type) {
               case "MOVE":
@@ -265,17 +265,17 @@ export class BattleArenaRoom extends Room<BattleArenaRoomStateSchema> {
           this.state.clientCurrentAction.delete(action.clientId);
           if (this.state.clientBufferedAction.has(action.clientId)) {
             // if there's an action q'd up, add it to current action and process it
-            const newAction = this.state.clientBufferedAction.get(action.clientId);
+            const msg = CharacterActionMsg.parse(this.state.clientBufferedAction.get(action.clientId));
             try {
-              switch (newAction.actionType) {
+              switch (msg.type) {
                 case "MOVE":
-                  await move(this.state, this.clients.getById(newAction.clientId), JSON.parse(newAction.payload), newAction.reqId);
+                  await move(this.state, this.clients.getById(action.clientId), JSON.parse(msg.payload), msg.reqId);
                   break;
                 case "ATTACK":
-                  await attack(this.state, this.clients.getById(newAction.clientId), JSON.parse(newAction.payload), newAction.reqId)
+                  await attack(this.state, this.clients.getById(action.clientId), JSON.parse(msg.payload), msg.reqId)
                   break;
                 case "ITEM":
-                  await item(this.state, this.clients.getById(newAction.clientId), JSON.parse(newAction.payload), newAction.reqId);
+                  await item(this.state, this.clients.getById(action.clientId), JSON.parse(msg.payload), msg.reqId);
                   break;
               }
             } catch (e: any) {
@@ -340,8 +340,7 @@ export class BattleArenaRoom extends Room<BattleArenaRoomStateSchema> {
         }
       });
 
-      console.log("Loaded actor", actor);
-      this.state.users.set(client.id, plainToInstance(UserSchema, {
+      const setUser = plainToInstance(UserSchema, {
         username: user.username,
         displayName: user.displayName,
         skin: user.characterSkin,
@@ -351,18 +350,18 @@ export class BattleArenaRoom extends Room<BattleArenaRoomStateSchema> {
           vitals: actor.vitals,
           stats: actor.stats,
           skills: actor.skills,
-          inventory: userInventory.inventory,
+          inventory: { items: (userInventory.inventory as { items: { itemId: string, amount: 0 }[] }).items.filter((item) => item.itemId != "") }, //userInventory.inventory,
           worn: userInventory.worn,
           isAlive: true,
         }
-      }));
+      });
+      this.state.users.set(client.id, setUser);
 
       // applies equipment stats to actor
       await this.state.users.get(client.sessionId).actor.processEquipment();
 
       // Reverse look up
       this.state.usernameToClientId.set(user.username, client.id);
-      console.log("Session ID: ", this.state.usernameToClientId.get(user.username));
       // Set the user client session to this one
       await prisma.user.update({
         where: {
@@ -373,7 +372,7 @@ export class BattleArenaRoom extends Room<BattleArenaRoomStateSchema> {
         }
       })
     } catch (e: any) {
-      console.error(e.message);
+      console.error(e);
       client.send("error", JSON.stringify({ error: e.message }));
       client.leave();
     }

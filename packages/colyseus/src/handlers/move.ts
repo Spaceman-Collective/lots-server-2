@@ -1,5 +1,5 @@
 import { Client } from "colyseus";
-import { BattleArenaRoomStateSchema } from "../schema/rooms/BattleArenaRoom";
+import { AddToTickQAction, BattleArenaRoomStateSchema } from "../schema/rooms/BattleArenaRoom";
 import { z } from 'zod';
 import { plainToInstance } from "class-transformer";
 import { ActionSchema } from "../schema/Action";
@@ -23,6 +23,7 @@ export async function move(state: BattleArenaRoomStateSchema, client: Client, ms
 
         // Calculate next tick and add it to state
         const actorMoveUpdateTick = state.ticks + TICKS_PER_SQ;
+
         state.addToTickQ(actorMoveUpdateTick, plainToInstance(ActionSchema, {
             actionType: "MOVE",
             reqId,

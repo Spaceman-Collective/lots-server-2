@@ -1,5 +1,5 @@
 import { Client } from "colyseus";
-import { BattleArenaRoomStateSchema } from "../schema/rooms/BattleArenaRoom";
+import { AddToTickQAction, BattleArenaRoomStateSchema } from "../schema/rooms/BattleArenaRoom";
 import { z } from 'zod';
 import { plainToInstance } from "class-transformer";
 import { ActionSchema } from "../schema/Action";

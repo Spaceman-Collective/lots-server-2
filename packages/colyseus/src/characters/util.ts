@@ -73,13 +73,13 @@ function rollCharacter(roll: number) {
             staminaMax: Math.floor(CommonVitals.staminaMax * mult),
             staminaRecovery: Math.floor(CommonVitals.staminaRecovery * mult),
         },
-        skills: rarity == CharacterRarity.DEITY ? CommonSkills : {
+        skills: rarity == CharacterRarity.DEITY ? {
             fighting: 2,
             ranged: 2,
             magic: 2,
             tech: 2,
             firearms: 2
-        },
+        } : CommonSkills,
         stats: {
             damageMin: Math.floor(CommonStats.damageMin * mult),
             damageMax: Math.floor(CommonStats.damageMax * mult),
@@ -123,7 +123,7 @@ export const CommonVitals = {
 export const CommonStats = {
     damageMin: 10,
     damageMax: 15,
-    accuracy: 10000, //25% accuracy //TODO: set back to 25%
+    accuracy: 10000, //10% accuracy //TODO: set back to 25%
     dodge: 10,
     range: 1,
     speed: 1,

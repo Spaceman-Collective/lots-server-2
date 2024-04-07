@@ -26,7 +26,7 @@ export class BattleArenaRoomStateSchema extends Schema {
     // Actor Queue System
     // Client Current Action (clientId => action)
     @type({ map: ActionSchema }) clientCurrentAction = new MapSchema<ActionSchema>();
-    @type({ map: ActionSchema }) clientBufferedAction = new MapSchema<ActionSchema>();
+    @type({ map: "string" }) clientBufferedAction = new MapSchema<String>();
 
     // Global Tick Q
     @type({ map: ActionArraySchema }) tickQ = new MapSchema<ActionArraySchema>();
@@ -186,9 +186,15 @@ export class BattleArenaRoomStateSchema extends Schema {
             await prisma.userEquipment.update({
                 where: { username: winnerUsername },
                 data: {
+                    inventory: winnerUserEquipment.inventory,
                     vault: winnerUserEquipment.vault
                 }
             })
         }
     }
+}
+
+export interface AddToTickQAction {
+    tickStartsAt: string,
+    action: ActionSchema
 }

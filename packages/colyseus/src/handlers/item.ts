@@ -1,5 +1,5 @@
 import { Client } from "colyseus";
-import { BattleArenaRoomStateSchema } from "../schema/rooms/BattleArenaRoom";
+import { AddToTickQAction, BattleArenaRoomStateSchema } from "../schema/rooms/BattleArenaRoom";
 import { z } from 'zod';
 import { plainToInstance } from "class-transformer";
 import { PrismaClient } from "@prisma/client";
@@ -43,7 +43,7 @@ interface CastServerPayload extends ItemServerPayload {
     casterSkills: any | null,
 }
 
-export async function item(state: BattleArenaRoomStateSchema, client: Client, msg: any, reqId: string) {
+export async function item(state: BattleArenaRoomStateSchema, client: Client, msg: any, reqId: string): Promise<AddToTickQAction[]> {
     try {
         const { inventoryIdx, targetTile } = ConsumeMsg.parse(msg);
 
@@ -88,15 +88,16 @@ export async function item(state: BattleArenaRoomStateSchema, client: Client, ms
                 actor.worn[wornItem.wornArea] = item.id;
                 // process equip of the new item
                 processEquip(actor, wornItem);
-
+                return [];
                 break;
             case "BUFF":
+                let actions: AddToTickQAction[] = [];
                 // If it's BUFF, add 2 to tick Q, one after buffCastDuration to apply the effect, and then buffDuration after to inverse it
                 const buffItem = plainToInstance(BuffItemSchema, item.data);
                 const takesEffectTick = state.ticks + buffItem.buffCastTime;
-                state.addToTickQ(
-                    takesEffectTick,
-                    plainToInstance(ActionSchema, {
+                actions.push({
+                    tickStartsAt: takesEffectTick.toString(),
+                    action: plainToInstance(ActionSchema, {
                         actionType: "ITEM",
                         reqId,
                         clientId: client.sessionId,
@@ -111,20 +112,20 @@ export async function item(state: BattleArenaRoomStateSchema, client: Client, ms
                             skillsModified: null,
                         } as BuffServerPayload)
                     })
-                );
+                })
 
                 //if duration is -1, then no need to reverse
                 if (buffItem.tickDuration != -1) {
                     const expiresTick = takesEffectTick + buffItem.tickDuration;
-                    state.addToTickQ(
-                        takesEffectTick,
-                        plainToInstance(ActionSchema, {
+                    actions.push({
+                        tickStartsAt: expiresTick.toString(),
+                        action: plainToInstance(ActionSchema, {
                             actionType: "ITEM",
                             reqId,
                             clientId: client.sessionId,
                             payload: JSON.stringify(msg),
                             tickStartedAt: takesEffectTick.toString(),
-                            tickEndsAt: expiresTick.toString(),
+                            tickEndsAt: (expiresTick + 1).toString(), //ends same tick it gets set
                             serverPayload: JSON.stringify({
                                 effectType: "BUFF",
                                 targetUsername: state.users.get(client.sessionId).username,
@@ -133,8 +134,9 @@ export async function item(state: BattleArenaRoomStateSchema, client: Client, ms
                                 skillsModified: null,
                             } as BuffServerPayload)
                         })
-                    );
+                    })
                 }
+                return actions;
                 break;
             case "AMMO":
                 // If it's Ammo, check if it's the type required, and then set the ammoInventoryIdx to this item
@@ -143,17 +145,19 @@ export async function item(state: BattleArenaRoomStateSchema, client: Client, ms
                     throw new Error("Incorrect ammo type for selected weapon.")
                 }
                 actor.stats.ammoInventoryIdx = inventoryIdx;
+                return [];
                 break;
             case "CASTABLE":
+                let castableActions: AddToTickQAction[] = [];
                 // If it's castable, check range, target, etc, then wait cast duration and apply two tickQ events
                 if (!targetTile) { throw new Error("Target tile required for castables!") }
                 const castableItem = plainToInstance(CastableItemSchema, item.data);
                 const actorsInRange = findCharactersInTileRange(state, { x: targetTile.x, y: targetTile.y }, castableItem.tileRange);
                 const castTakesEffectTick = state.ticks + castableItem.castableCastTime;
                 for (let actor of actorsInRange) {
-                    state.addToTickQ(
-                        castTakesEffectTick,
-                        plainToInstance(ActionSchema, {
+                    castableActions.push({
+                        tickStartsAt: castTakesEffectTick.toString(),
+                        action: plainToInstance(ActionSchema, {
                             actionType: "ITEM",
                             reqId,
                             clientId: client.sessionId,
@@ -170,13 +174,13 @@ export async function item(state: BattleArenaRoomStateSchema, client: Client, ms
                                 casterSkills: actor.skills.toJSON()
                             })
                         })
-                    )
+                    })
 
                     if (castableItem.castDuration != -1) {
                         const expiresTick = castTakesEffectTick + castableItem.castDuration;
-                        state.addToTickQ(
-                            expiresTick,
-                            plainToInstance(ActionSchema, {
+                        castableActions.push({
+                            tickStartsAt: expiresTick.toString(),
+                            action: plainToInstance(ActionSchema, {
                                 actionType: "ITEM",
                                 reqId,
                                 clientId: client.sessionId,
@@ -193,9 +197,10 @@ export async function item(state: BattleArenaRoomStateSchema, client: Client, ms
                                     casterSkills: null, //only needed on damage and not needed on reverse
                                 })
                             })
-                        )
+                        })
                     }
                 }
+                return castableActions;
                 break;
         }
 
