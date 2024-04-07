@@ -29,7 +29,6 @@ const JoinRoomMsg = z.object({
 export class BattleArenaRoom extends Room<BattleArenaRoomStateSchema> {
   maxClients = 5;
   patchRate: number = 100; //default is 50ms, we want to match it to tick rate
-  autoDispose = false;
 
   maxAirdropsPerRoom = 25;
   currentGlobalDrops = 0;
