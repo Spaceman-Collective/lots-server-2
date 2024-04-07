@@ -3,7 +3,8 @@ import { BattleArenaRoomStateSchema } from "../schema/rooms/BattleArenaRoom";
 import { z } from 'zod';
 import { plainToInstance } from "class-transformer";
 import { ActionSchema } from "../schema/Action";
-import { InventorySchema, SkillsSchema, StatsSchema, VitalsSchema } from "../schema/Actor";
+import { SkillsSchema, StatsSchema, VitalsSchema } from "../schema/ActorInfo";
+import { InventorySchema } from "../schema/Actor";
 
 const AttackMsg = z.object({
     targetUsername: z.string()
@@ -71,7 +72,6 @@ export async function resolveAttack(state: BattleArenaRoomStateSchema, action: A
                 stats: targetUser.actor.stats,
                 vitals: targetUser.actor.vitals,
             })
-        console.log("ATK: ", atk);
         if (atk.died) {
             await state.processCharacterDeath(targetUser.username);
         }
@@ -327,7 +327,6 @@ export async function processAttack(
             }
             break;
     }
-    console.log("Health DMG: ", healthDmg);
     if (healthDmg >= defender.vitals.health) {
         // Target User is DEAD
         defender.vitals.health = 0;
