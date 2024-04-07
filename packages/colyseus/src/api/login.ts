@@ -79,7 +79,20 @@ export async function createAccount(req: Request, res: Response) {
                     {
                         itemId: "hex_bag",
                         amount: 2
+                    },
+                    {
+                        itemId: "gun",
+                        amount: 1
+                    },
+                    {
+                        itemId: "sword",
+                        amount: 1
+                    },
+                    {
+                        itemId: "staff",
+                        amount: 1
                     }
+
                 ]
             }
         })

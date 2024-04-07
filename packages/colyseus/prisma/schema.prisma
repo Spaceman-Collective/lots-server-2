@@ -71,3 +71,8 @@ enum ItemType {
   ammo
   castable
 }
+
+model InjectionCredits {
+  cnft      String   @id
+  timestamp DateTime
+}

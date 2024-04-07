@@ -48,6 +48,147 @@ const wornItems: ItemLibrary[] = [
             }
         },
         dropAmt: 1
+    },
+    {
+        id: "gun",
+        name: "Gun",
+        type: "worn",
+        img: "Gun.png",
+        model: "Gun.fbx",
+        animation: "not_animated",
+        data: {
+            guid: "gun",
+            itemType: "WORN",
+            stackSize: 1,
+            requirements: {
+                fighting: 0,
+                ranged: 0,
+                magic: 0,
+                tech: 0,
+                firearms: 0
+            },
+            wornArea: "mainhand",
+            wornVitalsModified: {
+                health: 0,
+                healthMax: 0,
+                healthRecovery: 0,
+                shields: 0,
+                shieldsMax: 0,
+                shieldsRecovery: 0,
+                armor: 0,
+                armorMax: 0,
+                armorRecovery: 0,
+            },
+            wornStatsModfied: {
+                damageMin: 10,
+                damageMax: 50,
+                accuracy: 2500,
+                dodge: 0,
+                range: 8,
+                speed: 4,
+                critChance: 1000,
+                critMultiplier: 2,
+                damageType: "PHYS",
+                weaponType: "FIREARMS",
+                ammoTypeRequired: "NA",
+                ammoInventoryIdx: -2
+            }
+        },
+        dropAmt: 1
+    },
+    {
+        id: "book",
+        name: "Book",
+        type: "worn",
+        img: "Book.png",
+        model: "Book.fbx",
+        animation: "not_animated",
+        data: {
+            guid: "book",
+            itemType: "WORN",
+            stackSize: 1,
+            requirements: {
+                fighting: 0,
+                ranged: 0,
+                magic: 0,
+                tech: 0,
+                firearms: 0
+            },
+            wornArea: "mainhand",
+            wornVitalsModified: {
+                health: 0,
+                healthMax: 0,
+                healthRecovery: 0,
+                shields: 0,
+                shieldsMax: 0,
+                shieldsRecovery: 0,
+                armor: 0,
+                armorMax: 0,
+                armorRecovery: 0,
+            },
+            wornStatsModfied: {
+                damageMin: 10,
+                damageMax: 50,
+                accuracy: 2500,
+                dodge: 0,
+                range: 8,
+                speed: 4,
+                critChance: 1000,
+                critMultiplier: 2,
+                damageType: "MAGIC",
+                weaponType: "MAGIC",
+                ammoTypeRequired: "NA",
+                ammoInventoryIdx: -2
+            }
+        },
+        dropAmt: 1
+    },
+    {
+        id: "sword",
+        name: "Sword",
+        type: "worn",
+        img: "Sword.png",
+        model: "Sword.fbx",
+        animation: "not_animated",
+        data: {
+            guid: "sword",
+            itemType: "WORN",
+            stackSize: 1,
+            requirements: {
+                fighting: 0,
+                ranged: 0,
+                magic: 0,
+                tech: 0,
+                firearms: 0
+            },
+            wornArea: "mainhand",
+            wornVitalsModified: {
+                health: 0,
+                healthMax: 0,
+                healthRecovery: 0,
+                shields: 0,
+                shieldsMax: 0,
+                shieldsRecovery: 0,
+                armor: 0,
+                armorMax: 0,
+                armorRecovery: 0,
+            },
+            wornStatsModfied: {
+                damageMin: 10,
+                damageMax: 50,
+                accuracy: 2500,
+                dodge: 0,
+                range: 8,
+                speed: 4,
+                critChance: 1000,
+                critMultiplier: 2,
+                damageType: "PHYS",
+                weaponType: "FIGHTING",
+                ammoTypeRequired: "NA",
+                ammoInventoryIdx: -2
+            }
+        },
+        dropAmt: 1
     }
 ]
 

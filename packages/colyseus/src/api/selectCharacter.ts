@@ -5,7 +5,7 @@ import { jwtVerify } from "jose";
 import { plainToInstance } from "class-transformer";
 import { WornItemSchema } from "../schema/Item";
 import { checkRequirements } from "../handlers/item";
-import { SkillsSchema } from "../schema/Actor";
+import { SkillsSchema } from "../schema/ActorInfo";
 const prisma = new PrismaClient();
 
 
@@ -101,6 +101,32 @@ export async function selectCharacter(req: Request, res: Response) {
         })
 
         res.status(200).json({ success: true });
+    } catch (e: any) {
+        res.status(500).json({ success: false, error: e.message })
+    }
+}
+
+const SelectSkinMsg = z.object({
+    jwt: z.string(),
+    newSkin: z.enum(["788", "8667"]),
+})
+export async function selectSkin(req: Request, res: Response) {
+    try {
+        const { jwt, newSkin } = SelectSkinMsg.parse(req.body);
+        const { payload } = await jwtVerify(
+            jwt,
+            new TextEncoder().encode(process.env.SERVER_JWT_KEY)
+        );
+        const username = payload.username as string;
+
+        const user = await prisma.user.update({
+            where: { username },
+            data: {
+                characterSkin: newSkin
+            }
+        })
+
+        res.status(200).json({ success: true, user });
     } catch (e: any) {
         res.status(500).json({ success: false, error: e.message })
     }

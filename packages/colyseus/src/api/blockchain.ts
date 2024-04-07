@@ -12,7 +12,7 @@ const prisma = new PrismaClient();
  */
 const InjectMsg = z.object({
     jwt: z.string(),
-    txn: z.string(),
+    cnft_address: z.string(),
 })
 async function inject(req: Request, res: Response) {
     try {
