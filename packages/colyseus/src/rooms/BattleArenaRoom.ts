@@ -345,6 +345,7 @@ export class BattleArenaRoom extends Room<BattleArenaRoomStateSchema> {
       this.state.users.set(client.id, plainToInstance(UserSchema, {
         username: user.username,
         displayName: user.displayName,
+        skin: user.characterSkin,
         actor: {
           x: Math.floor(Math.random() * 26),
           y: Math.floor(Math.random() * 26),

@@ -10,6 +10,7 @@ const type = Context.create();
 export class UserSchema extends Schema {
     @type("string") username: string;
     @type("string") displayName: string;
+    @type("string") skin: string;
 
     @ClassType(() => ActorSchema)
     @type(ActorSchema) actor: ActorSchema = new ActorSchema();

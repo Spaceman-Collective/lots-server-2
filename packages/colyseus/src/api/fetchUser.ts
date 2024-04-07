@@ -20,6 +20,8 @@ export async function getUser(req: Request, res: Response) {
         );
         const username = payload.username as string;
 
+        const user = await prisma.user.findUniqueOrThrow({ where: { username } });
+
         const characters = await prisma.userCharacters.findMany({
             where: { username }
         });
@@ -42,7 +44,7 @@ export async function getUser(req: Request, res: Response) {
             await selectedActor.processEquipment()
         }
 
-        res.status(200).json({ success: true, characters, equipment, selectedActor: selectedActor.toJSON() });
+        res.status(200).json({ success: true, characters, equipment, selectedActor: selectedActor.toJSON(), user: { skin: user.characterSkin, displayName: user.displayName } });
     } catch (e: any) {
         res.status(500).json({ success: false, error: e.message });
     }

@@ -126,7 +126,7 @@ export async function selectSkin(req: Request, res: Response) {
             }
         })
 
-        res.status(200).json({ success: true, user });
+        res.status(200).json({ success: true });
     } catch (e: any) {
         res.status(500).json({ success: false, error: e.message })
     }

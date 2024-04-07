@@ -16,7 +16,7 @@ datasource db {
 model User {
   username      String @id
   displayName   String
-  characterSkin String @default("DEFAULT")
+  characterSkin String @default("788")
   userSalt      String
   passwordHash  String
   walletPubkey  String @default("")
