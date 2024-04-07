@@ -27,7 +27,7 @@ export class VitalsSchema extends Schema {
     @type("uint32") barrierMax: number;
     @type("uint32") barrierRecovery: number;
 
-    // Determines RUN duration
+    // Determines RUN duration (CURRENTLY DISABLED!)
     @type("uint32") stamina: number; //starts at 100
     @type("uint32") staminaMax: number;
     @type("uint32") staminaRecovery: number;

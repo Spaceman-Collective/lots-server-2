@@ -35,7 +35,7 @@ export async function selectCharacter(req: Request, res: Response) {
         }
 
         // When you join a room you're locked in to your selection
-        if (user.clientId !== "") {
+        if (user.clientId !== "not_logged_in") {
             throw new Error("Can't change characters while in a room!");
         }
 

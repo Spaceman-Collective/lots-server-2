@@ -58,27 +58,32 @@ async function inject(req: Request, res: Response) {
         }
 
         const cnft = await shyft.nft.compressed.read({ mint: msg.cnft_address });
-        const itemId = cnft.attributes['itemId'];
+        const type = cnft.attributes['CTYPE'];
 
-        const item = await prisma.itemLibrary.findUnique({ where: { id: itemId as string } });
-        if (!item) {
-            throw new Error("Item not found!");
-        }
-
-        // Add this item with full stack size (since only full stack sizes can be ejected) to the user vault
-        let userEquipment = await prisma.userEquipment.findUnique({ where: { username } });
-        const bareItem = plainToInstance(ItemSchema, item.data);
-        (userEquipment.vault as { itemId: string, amount: number }[]).push({ itemId: item.id, amount: bareItem.stackSize });
-        const updatedUserEquipment = await prisma.userEquipment.update({
-            where: {
-                username
-            },
-            data: {
-                vault: userEquipment.vault
+        if (type == "ITEM") {
+            const itemId = cnft.attributes['itemId'];
+            const item = await prisma.itemLibrary.findUnique({ where: { id: itemId as string } });
+            if (!item) {
+                throw new Error("Item not found!");
             }
-        });
 
-        res.status(200).json({ success: true, userEquipment: updatedUserEquipment });
+            // Add this item with full stack size (since only full stack sizes can be ejected) to the user vault
+            let userEquipment = await prisma.userEquipment.findUnique({ where: { username } });
+            const bareItem = plainToInstance(ItemSchema, item.data);
+            (userEquipment.vault as { itemId: string, amount: number }[]).push({ itemId: item.id, amount: bareItem.stackSize });
+            const updatedUserEquipment = await prisma.userEquipment.update({
+                where: {
+                    username
+                },
+                data: {
+                    vault: userEquipment.vault
+                }
+            });
+
+            res.status(200).json({ success: true, userEquipment: updatedUserEquipment });
+        } else if (type == "CHARACTER") {
+            // TODO
+        }
     } catch (e: any) {
         res.status(500).json({ success: false, error: e.message })
     }

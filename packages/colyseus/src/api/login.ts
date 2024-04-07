@@ -51,10 +51,41 @@ export async function createAccount(req: Request, res: Response) {
 
         await prisma.userCharacters.create({ data: commonChar })
 
+        const vault = Array(50).fill({ itemId: "", amount: 0 });
+        vault[0] = {
+            itemId: "armor_black",
+            amount: 1
+        };
+        vault[1] = {
+            itemId: "health_potion",
+            amount: 3
+        };
+        vault[2] = {
+            itemId: "arrow",
+            amount: 25
+        };
+        vault[3] = {
+            itemId: "hex_bag",
+            amount: 2
+        };
+        vault[4] = {
+            itemId: "gun",
+            amount: 1
+        };
+        vault[5] = {
+            itemId: "sword",
+            amount: 1
+        };
+        vault[6] = {
+            itemId: "staff",
+            amount: 1
+        };
+
+
         await prisma.userEquipment.create({
             data: {
                 username: createAccountInfo.username,
-                inventory: { items: [] },
+                inventory: { items: Array(20).fill({ itemId: "", amount: 0 }) },
                 worn: {
                     head: "",
                     torso: "",
@@ -63,37 +94,7 @@ export async function createAccount(req: Request, res: Response) {
                     mainhand: "",
                     offhand: "",
                 },
-                vault: [
-                    {
-                        itemId: "armor_black",
-                        amount: 1
-                    },
-                    {
-                        itemId: "health_potion",
-                        amount: 3
-                    },
-                    {
-                        itemId: "arrow",
-                        amount: 25
-                    },
-                    {
-                        itemId: "hex_bag",
-                        amount: 2
-                    },
-                    {
-                        itemId: "gun",
-                        amount: 1
-                    },
-                    {
-                        itemId: "sword",
-                        amount: 1
-                    },
-                    {
-                        itemId: "staff",
-                        amount: 1
-                    }
-
-                ]
+                vault
             }
         })
 

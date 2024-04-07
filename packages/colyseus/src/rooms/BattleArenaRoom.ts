@@ -341,7 +341,7 @@ export class BattleArenaRoom extends Room<BattleArenaRoomStateSchema> {
         }
       });
 
-
+      console.log("Loaded actor", actor);
       this.state.users.set(client.id, plainToInstance(UserSchema, {
         username: user.username,
         displayName: user.displayName,
@@ -363,7 +363,7 @@ export class BattleArenaRoom extends Room<BattleArenaRoomStateSchema> {
 
       // Reverse look up
       this.state.usernameToClientId.set(user.username, client.id);
-
+      console.log("Session ID: ", this.state.usernameToClientId.get(user.username));
       // Set the user client session to this one
       await prisma.user.update({
         where: {
