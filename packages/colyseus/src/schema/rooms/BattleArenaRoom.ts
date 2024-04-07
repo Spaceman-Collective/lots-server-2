@@ -11,6 +11,12 @@ const prisma = new PrismaClient();
 
 const type = Context.create();
 
+
+export class BufferedAction extends Schema {
+    @type("string") actionType: "MOVE" | "ATTACK" | "ITEM";
+    @type("string") message: string;
+}
+
 export class BattleArenaRoomStateSchema extends Schema {
     @type("uint64") ticks: number;
 
@@ -26,7 +32,7 @@ export class BattleArenaRoomStateSchema extends Schema {
     // Actor Queue System
     // Client Current Action (clientId => action)
     @type({ map: ActionSchema }) clientCurrentAction = new MapSchema<ActionSchema>();
-    @type({ map: "string" }) clientBufferedAction = new MapSchema<string>();
+    @type({ map: BufferedAction }) clientBufferedAction = new MapSchema<BufferedAction>();
 
     // Global Tick Q
     @type({ map: ActionArraySchema }) tickQ = new MapSchema<ActionArraySchema>();

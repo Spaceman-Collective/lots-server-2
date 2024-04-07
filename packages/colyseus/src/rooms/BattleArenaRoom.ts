@@ -1,5 +1,5 @@
 import { Room, Client } from "@colyseus/core";
-import { AddToTickQAction, BattleArenaRoomStateSchema } from "../schema/rooms/BattleArenaRoom";
+import { AddToTickQAction, BattleArenaRoomStateSchema, BufferedAction } from "../schema/rooms/BattleArenaRoom";
 import { z } from 'zod';
 import { PrismaClient } from '@prisma/client';
 import { jwtVerify } from "jose";
@@ -76,7 +76,10 @@ export class BattleArenaRoom extends Room<BattleArenaRoomStateSchema> {
           const msg = CharacterActionMsg.parse(message);
           if (this.state.clientCurrentAction.get(client.id)) {
             console.log("Setting buffered action");
-            this.state.clientBufferedAction.set(client.id, JSON.stringify(message));
+            this.state.clientBufferedAction.set(client.id, plainToInstance(BufferedAction, {
+              actionType: msg.type,
+              message: JSON.stringify(message)
+            }));
           } else {
             switch (msg.type) {
               case "MOVE":
@@ -266,7 +269,7 @@ export class BattleArenaRoom extends Room<BattleArenaRoomStateSchema> {
           this.state.clientCurrentAction.delete(action.clientId);
           if (this.state.clientBufferedAction.has(action.clientId)) {
             // if there's an action q'd up, add it to current action and process it
-            const msg = CharacterActionMsg.parse(JSON.parse(this.state.clientBufferedAction.get(action.clientId)));
+            const msg = CharacterActionMsg.parse(JSON.parse(this.state.clientBufferedAction.get(action.clientId).message));
             try {
               switch (msg.type) {
                 case "MOVE":
