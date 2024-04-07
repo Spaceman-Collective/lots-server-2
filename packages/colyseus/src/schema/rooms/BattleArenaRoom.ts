@@ -22,6 +22,7 @@ export class BattleArenaRoomStateSchema extends Schema {
 
     @type(RoomOptionsSchema) roomOptions: RoomOptionsSchema = new RoomOptionsSchema();
     @type(BattleMap) bmap = new BattleMap();
+    @type({ map: "boolean" }) clientLoadedInMap = new MapSchema<boolean>();
 
     // Client ID => User Object => Actor they control
     @type({ map: UserSchema }) users = new MapSchema<UserSchema>();

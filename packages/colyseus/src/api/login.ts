@@ -77,7 +77,7 @@ export async function createAccount(req: Request, res: Response) {
             amount: 1
         };
         vault[6] = {
-            itemId: "staff",
+            itemId: "book",
             amount: 1
         };
 

@@ -58,12 +58,19 @@ export class BattleArenaRoom extends Room<BattleArenaRoomStateSchema> {
         try {
           const userObj = this.state.users.get(client.id);
           if (userObj.username === this.state.roomOptions.ownerUserName) {
-            this.state.inLobby = false;
+            this.broadcast("game:state:start");
           } else {
             throw new Error("Only the owner may start the room!")
           }
         } catch (e: any) {
           client.send("error", JSON.stringify({ error: e }));
+        }
+      });
+
+      this.onMessage("game:loaded", (client, message) => {
+        this.state.clientLoadedInMap.set(client.sessionId, true);
+        if (this.state.clientLoadedInMap.entries.length == this.clients.length) {
+          this.state.inLobby = false;
         }
       });
 
@@ -273,13 +280,13 @@ export class BattleArenaRoom extends Room<BattleArenaRoomStateSchema> {
             try {
               switch (msg.type) {
                 case "MOVE":
-                  await move(this.state, this.clients.getById(action.clientId), JSON.parse(msg.payload), msg.reqId);
+                  await move(this.state, this.clients.getById(action.clientId), msg.payload, msg.reqId);
                   break;
                 case "ATTACK":
-                  await attack(this.state, this.clients.getById(action.clientId), JSON.parse(msg.payload), msg.reqId)
+                  await attack(this.state, this.clients.getById(action.clientId), msg.payload, msg.reqId)
                   break;
                 case "ITEM":
-                  await item(this.state, this.clients.getById(action.clientId), JSON.parse(msg.payload), msg.reqId);
+                  await item(this.state, this.clients.getById(action.clientId), msg.payload, msg.reqId);
                   break;
               }
             } catch (e: any) {
