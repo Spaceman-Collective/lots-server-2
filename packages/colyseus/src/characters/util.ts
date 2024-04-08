@@ -100,8 +100,8 @@ function rollCharacter(roll: number) {
 }
 
 export const CommonVitals = {
-    health: 1000,
-    healthMax: 1000,
+    health: 500,
+    healthMax: 500,
     healthRecovery: 1,
 
     shields: 0,

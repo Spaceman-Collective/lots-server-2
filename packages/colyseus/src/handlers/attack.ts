@@ -17,7 +17,11 @@ export async function attack(state: BattleArenaRoomStateSchema, client: Client, 
         const user = state.users.get(client.id);
         const targetUser = state.users.get(state.usernameToClientId.get(targetUsername));
         if (!targetUser) {
-            throw new Error(`Target user doesn't exist!`)
+            throw new Error(`Target user doesn't exist!`);
+        }
+
+        if (!user.actor.isAlive) {
+            throw new Error("Can't attack while dead");
         }
 
         // Check if target player is ALIVE
@@ -31,12 +35,15 @@ export async function attack(state: BattleArenaRoomStateSchema, client: Client, 
             Math.pow(user.actor.y - targetUser.actor.y, 2)
         );
         //added 0.4 for diagonal attacks
+        console.log(user.actor.stats.range);
         if (distance > user.actor.stats.range + 0.4) {
             throw new Error(`Target out of range!`);
         }
 
         // Create new tickQ action based on user's weapon's speed
-        const attackTick = state.ticks + (10 / user.actor.stats.speed);
+        const attackTick = state.ticks + Math.floor((10 / user.actor.stats.speed));
+        console.log(state.ticks);
+        console.log("Attack Tick Ends At:", attackTick.toString());
         state.addToTickQ(attackTick, plainToInstance(ActionSchema, {
             actionType: "ATTACK",
             reqId,

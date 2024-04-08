@@ -69,7 +69,7 @@ export class BattleArenaRoom extends Room<BattleArenaRoomStateSchema> {
 
       this.onMessage("game:loaded", (client, message) => {
         this.state.clientLoadedInMap.set(client.sessionId, true);
-        if (this.state.clientLoadedInMap.entries.length == this.clients.length) {
+        if (this.state.clientLoadedInMap.size == this.clients.length) {
           this.state.inLobby = false;
         }
       });
@@ -82,7 +82,7 @@ export class BattleArenaRoom extends Room<BattleArenaRoomStateSchema> {
 
           const msg = CharacterActionMsg.parse(message);
           if (this.state.clientCurrentAction.get(client.id)) {
-            console.log("Setting buffered action");
+            console.log("Current Action: ", this.state.clientCurrentAction.get(client.sessionId).payload);
             this.state.clientBufferedAction.set(client.id, plainToInstance(BufferedAction, {
               actionType: msg.type,
               message: JSON.stringify(message)
@@ -138,6 +138,7 @@ export class BattleArenaRoom extends Room<BattleArenaRoomStateSchema> {
     // Check if the game is over
     if (this.state.winnerUsername != "") {
       this.processGameEnd();
+      this.state.inLobby = true;
     }
   }
 
@@ -158,8 +159,8 @@ export class BattleArenaRoom extends Room<BattleArenaRoomStateSchema> {
       }
 
       const roll = Math.floor(Math.random() * 10001);
-      const CHARACTER_THRESHOLD = 100;
-      const ITEM_THRESHOLD = 500;
+      const CHARACTER_THRESHOLD = 1000;
+      const ITEM_THRESHOLD = 5000;
       const clientId = this.state.usernameToClientId.get(username)
 
       if (roll < CHARACTER_THRESHOLD) {
@@ -167,11 +168,12 @@ export class BattleArenaRoom extends Room<BattleArenaRoomStateSchema> {
         let character = getRandomCharacter(roll);
         character.username = username;
         await prisma.userCharacters.create({ data: character })
-        this.clients.getById(clientId).send("airdrop", JSON.stringify({
+        this.clients.getById(clientId).send("airdrop", {
           type: "CHARACTER",
-          data: character
-        }))
-
+          name: `${character.rarity} ${character.name}`,
+          data: JSON.stringify(character)
+        })
+        console.log("Airdrop character");
       } else if (roll < ITEM_THRESHOLD) {
         // if (101-500) it's an item
         const itemCount = await prisma.itemLibrary.count();
@@ -192,10 +194,12 @@ export class BattleArenaRoom extends Room<BattleArenaRoomStateSchema> {
             vault
           }
         })
-        this.clients.getById(clientId).send("airdrop", JSON.stringify({
+        this.clients.getById(clientId).send("airdrop", {
           type: "ITEM",
-          data: randomItem
-        }))
+          name: randomItem.name,
+          data: JSON.stringify(randomItem)
+        })
+        console.log("Airdrop item");
       }
 
 
@@ -313,7 +317,7 @@ export class BattleArenaRoom extends Room<BattleArenaRoomStateSchema> {
         throw new Error("Wrong Password!")
       }
       // Check max players in a room
-      if (this.clients.length + 1 > this.state.roomOptions.maxPlayers) {
+      if (this.clients.length > this.state.roomOptions.maxPlayers) {
         throw new Error("Room is full!")
       }
       // Check they have a JWT signed by the server for the given User
@@ -369,7 +373,7 @@ export class BattleArenaRoom extends Room<BattleArenaRoomStateSchema> {
       this.state.users.set(client.id, setUser);
 
       // applies equipment stats to actor
-      await this.state.users.get(client.sessionId).actor.processEquipment();
+      // await this.state.users.get(client.sessionId).actor.processEquipment();
 
       // Reverse look up
       this.state.usernameToClientId.set(user.username, client.id);
@@ -392,6 +396,11 @@ export class BattleArenaRoom extends Room<BattleArenaRoomStateSchema> {
   onLeave(client: Client, consented: boolean) {
     try {
       const userObj = this.state.users.get(client.id);
+      // process death
+      if (!this.state.inLobby) {
+        this.state.processCharacterDeath(userObj.username);
+      }
+
       // Reset Client ID for user
       prisma.user.update({
         where: {
