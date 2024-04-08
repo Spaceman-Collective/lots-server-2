@@ -361,7 +361,7 @@ export class BattleArenaRoom extends Room<BattleArenaRoomStateSchema> {
           vitals: actor.vitals,
           stats: actor.stats,
           skills: actor.skills,
-          inventory: { items: (userInventory.inventory as { items: { itemId: string, amount: 0 }[] }).items.filter((item) => item.itemId != "") }, //userInventory.inventory,
+          inventory: { items: [] }, //userInventory.inventory,
           worn: userInventory.worn,
           isAlive: true,
         }
