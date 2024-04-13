@@ -159,8 +159,8 @@ export class BattleArenaRoom extends Room<BattleArenaRoomStateSchema> {
       }
 
       const roll = Math.floor(Math.random() * 10001);
-      const CHARACTER_THRESHOLD = 1000;
-      const ITEM_THRESHOLD = 5000;
+      const CHARACTER_THRESHOLD = 100;
+      const ITEM_THRESHOLD = 500;
       const clientId = this.state.usernameToClientId.get(username)
 
       if (roll < CHARACTER_THRESHOLD) {
